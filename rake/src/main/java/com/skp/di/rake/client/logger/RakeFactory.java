@@ -23,7 +23,7 @@ public class RakeFactory {
             logger = loggerMap.get(clazz);
         } else {
             RakeDao dao = new RakeDaoMemory();
-            logger = new RakeBasic(dao);
+            logger = new RakeLogger(dao);
             loggerMap.put(clazz, logger);
         }
 

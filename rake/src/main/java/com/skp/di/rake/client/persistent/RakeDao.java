@@ -1,8 +1,8 @@
 package com.skp.di.rake.client.persistent;
 
-        import org.json.JSONObject;
+import org.json.JSONObject;
 
-        import java.util.List;
+import java.util.List;
 
 public interface RakeDao {
 
@@ -14,4 +14,7 @@ public interface RakeDao {
     JSONObject pop();
     List<JSONObject> pop(int count);
     List<JSONObject> clear();
+
+    int getMaxTrackCount();
+    void setMaxTrackCount(int n);
 }

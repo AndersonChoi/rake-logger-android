@@ -4,10 +4,13 @@ import org.json.JSONObject;
 
 public interface Rake {
     void track(JSONObject json);
-    String[] flush();
+    String flush();
     int getCount();
     void clear();
 
     String getEndPoint();
     void setEndPoint(String url);
+
+    int getMaxTrackCount();
+    void setMaxTrackCount(int n);
 }

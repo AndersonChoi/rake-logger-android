@@ -7,6 +7,7 @@ import java.util.List;
 public class RakeDaoMemory implements RakeDao {
 
     private List<JSONObject> logQueue;
+    private int maxTrackCount;
 
     public RakeDaoMemory() {
         logQueue = new ArrayList<>();
@@ -43,5 +44,15 @@ public class RakeDaoMemory implements RakeDao {
         List<JSONObject> removed = new ArrayList<>(logQueue);
         logQueue.clear();
         return removed;
+    }
+
+    @Override
+    public int getMaxTrackCount() {
+        return maxTrackCount;
+    }
+
+    @Override
+    public void setMaxTrackCount(int n) {
+        maxTrackCount = n;
     }
 }
