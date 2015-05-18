@@ -7,10 +7,4 @@ public interface Rake {
     String flush();
     int getCount();
     void clear();
-
-    String getEndPoint();
-    void setEndPoint(String url);
-
-    int getMaxTrackCount();
-    void setMaxTrackCount(int n);
 }

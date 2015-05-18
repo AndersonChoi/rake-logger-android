@@ -2,17 +2,20 @@
 
 - ~~Timeout Exception~~
 - ~~Json 으로 Assert~~,
-- 최대 N개 까지만 저장
-- 네트워크 전송을 시도하는건 Mock 이라도 무식한것 같다. HTTP Client 를 상속받으면?
+- ~~최대 N개 까지만 저장~~
+- MockHttpClient
 @Cucumber
 
+Http Response
+
+- getMaxCount, getEndPoint 를 다 제거할 수 있지 않을까?
+클래스패스에서 동적으로 구현체 찾아서
 
 - 별도의 스레드로 동작해야 한다. DAO Multithreaded
 - 스케쥴러를 설정할 수 있어야 한다.
 - `Dev` 모드일 경우 바로 플러시 해야한다.
 - 셔틀과 같이 쓰여야 한다.
 - HTTPS
-
 
 
 @Retrofit

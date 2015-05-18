@@ -29,29 +29,12 @@ public final class RakeLogger implements Rake {
     }
 
     @Override
-    public String getEndPoint() {
-        return endPoint;
-    }
-
-    @Override
-    public void setEndPoint(String endPoint) {
-        this.endPoint = endPoint;
-    }
-
-    @Override
-    public int getMaxTrackCount() {
-        return dao.getMaxTrackCount();
-    }
-
-    @Override
-    public void setMaxTrackCount(int n) {
-        dao.setMaxTrackCount(n);
-    }
-
-    @Override
     public void track(JSONObject log) {
         if (null == log) return;
         if (log.toString().equals("{\"\":\"\"}")) return;
+
+        if (RakeLoggerConfig.MAX_TRACK_COUNT == dao.getCount())
+            flush();
 
         dao.add(log);
     }

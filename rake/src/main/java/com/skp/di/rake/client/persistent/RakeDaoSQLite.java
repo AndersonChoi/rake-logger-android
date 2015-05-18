@@ -34,14 +34,4 @@ public class RakeDaoSQLite implements RakeDao {
     public List<JSONObject> clear() {
         return null;
     }
-
-    @Override
-    public int getMaxTrackCount() {
-        return 0;
-    }
-
-    @Override
-    public void setMaxTrackCount(int n) {
-
-    }
 }
