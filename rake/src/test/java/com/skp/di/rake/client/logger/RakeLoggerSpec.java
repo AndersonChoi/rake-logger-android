@@ -1,5 +1,7 @@
 package com.skp.di.rake.client.logger;
 
+import android.util.Log;
+
 import com.skp.di.rake.client.config.RakeLoggerConfig;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -16,6 +18,9 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -134,5 +139,17 @@ public class RakeLoggerSpec {
         logger.track(json);
 
         assertEquals(1, logger.getCount());
+    }
+
+    @Test
+    public void testLambda() {
+        List<String> arr = new ArrayList<>();
+        arr.add("abc");
+        arr.add("def");
+        arr.add("a");
+
+        System.out.println(arr);
+        Collections.sort(arr, (str1, str2) -> str1.compareTo(str2));
+        System.out.println(arr);
     }
 }
