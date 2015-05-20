@@ -1,17 +1,30 @@
 ### Day 5
 
-- MockHttpClient
-Http Response
+- ~~MockHttpClient~~
+-> protected method 인 getResponseString 만들고, 여기서 TestLogger 가 override
 
+- ~~Http Response~~
+- ~~Http Header~~
+- ~~RakeProtocol~~
+- ~~RakeProtocolException~~
+
+- ~~ 500 404 는 ErrorCode 가 아니라 StatusCode 로 구분해야.~~
+
+### Next
+
+- printStackTrace 제거
+- Log Wrapping 하기.
+- Base64
+
+- Gradle automatic version upgrade
+- HTTPS
 - 클래스패스에서 동적으로 Config 구현체 찾아서
-
+- Token, `Dev` 모드일 경우 바로 플러시 해야한다.
 - 별도의 스레드로 동작해야 한다. DAO Multithreaded
 - 스케쥴러를 설정할 수 있어야 한다.
-- `Dev` 모드일 경우 바로 플러시 해야한다.
-- Token
-
 - 셔틀과 같이 쓰여야 한다.
-- HTTPS
+- CompressField
+- API 로 노출되는 부분이 있어야하지 않을까?
 
 ### Day 4
 

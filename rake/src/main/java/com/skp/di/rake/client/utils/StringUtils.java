@@ -1,5 +1,11 @@
 package com.skp.di.rake.client.utils;
 
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 public class StringUtils {
 
     public static String join(String[] arr, String sep) {
@@ -32,5 +38,43 @@ public class StringUtils {
         }
 
         return (result.equals("")) ? null : result;
+    }
+
+    public static String toString(final InputStream is) {
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+
+        String line;
+        br = new BufferedReader(new InputStreamReader(is));
+
+        try {
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            closeQuietly(br);
+        }
+
+        return sb.toString();
+    }
+
+    public static void closeQuietly(final InputStream is) {
+        closeQuietly((Closeable) is);
+    }
+
+    public static void closeQuietly(final BufferedReader br) {
+        closeQuietly((Closeable) br);
+    }
+
+    public static void closeQuietly(final Closeable is) {
+        if (is != null) {
+            try {
+                is.close();
+            } catch (IOException e) {
+                // TODO: print stacktrace using a custom logger, or just ignore
+            }
+        }
     }
 }

@@ -1,13 +1,13 @@
-package com.skp.di.rake.client.logger;
+package mock;
 
+import com.skp.di.rake.client.logger.Rake;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
 
 import java.util.Collections;
 import java.util.HashMap;
 
-public final class RakeFactory {
-
+public class TestRakeFactory {
     private static HashMap<Class, Rake> loggerMap;
 
     static {
@@ -23,11 +23,12 @@ public final class RakeFactory {
             logger = loggerMap.get(clazz);
         } else {
             RakeDao dao = new RakeDaoMemory();
-            logger = new RakeLogger(dao);
+            logger = new TestRakeLogger(dao); /* use TestRakeLogger */
             loggerMap.put(clazz, logger);
         }
 
         return logger;
     }
 }
+
 

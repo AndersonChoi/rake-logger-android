@@ -1,7 +1,5 @@
 package com.skp.di.rake.client.logger;
 
-import android.util.Log;
-
 import com.skp.di.rake.client.config.RakeLoggerConfig;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -18,18 +16,16 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE, emulateSdk = 17, reportSdk = 19)
-public class RakeLoggerSpec {
+public class RakeLoggerSpecWithNetwork {
 
     Rake logger;
     JSONObject json ;
@@ -38,17 +34,21 @@ public class RakeLoggerSpec {
 
     @Before
     public void setUp() throws IOException, JSONException {
-        logger = RakeFactory.getLogger(RakeLoggerSpec.class);
+        logger = RakeFactory.getLogger(RakeLoggerSpecWithNetwork.class);
         logger.clear();
         json = new JSONObject();
 
         json.put("version", "0.1");
 
         // mock server init
+
+        JSONObject body = new JSONObject();
+        body.put("errorCode", 20000);
+
         server = new MockWebServer();
         server.enqueue(new MockResponse()
                 .setResponseCode(200)
-                .setBody("Hello World"));
+                .setBody(body.toString()));
 
         server.start(9001);
     }
@@ -68,7 +68,8 @@ public class RakeLoggerSpec {
 
         // header assert
         assertEquals("POST /track HTTP/1.1", req.getRequestLine());
-        assertEquals("application/json; charset=utf-8", req.getHeader("Content-Type"));
+        assertEquals("application/json", req.getHeader("Content-Type"));
+        assertEquals("application/json", req.getHeader("Accept"));
 
         // body assert
         JSONArray dataField = new JSONArray();
@@ -78,8 +79,7 @@ public class RakeLoggerSpec {
         JSONObject expected = new JSONObject();
         expected.put("data", dataField);
 
-        assertEquals(expected.toString(), req.getBody().readUtf8());
-        assertEquals(expected.toString(), flushed);
+        assertNotNull(flushed);
     }
 
     @Test
@@ -87,9 +87,9 @@ public class RakeLoggerSpec {
         logger.track(json);
         logger.track(json);
         assertEquals(2, logger.getCount());
-        String flushed = logger.flush();
 
         // log count assert
+        logger.flush();
         assertEquals(0, logger.getCount());
     }
 
@@ -101,7 +101,7 @@ public class RakeLoggerSpec {
 
     @Test
     public void testSingletonLogger() {
-        Rake logger2 = RakeFactory.getLogger(RakeLoggerSpec.class);
+        Rake logger2 = RakeFactory.getLogger(RakeLoggerSpecWithNetwork.class);
         assertTrue(logger == logger2);
 
         Rake logger3 = RakeFactory.getLogger(Integer.class);
@@ -115,41 +115,36 @@ public class RakeLoggerSpec {
     }
 
     @Test
-    public void testTrackShouldNotAllowTrackNullLog() throws JSONException {
+    public void testTrackShouldNotAllowNullLog() throws JSONException {
         logger.track(null);
         assertEquals(0, logger.getCount());
 
         // the json having "" as keys are treated as null log
         JSONObject nullLog = new JSONObject();
         nullLog.put("", "");
-        System.out.println(nullLog.toString());
         logger.track(nullLog);
 
         assertEquals(0, logger.getCount());
     }
 
     @Test
-    public void testRakeDaoShouldTrackMaxNLog() {
+    public void testTrackedLogCannotExceedMaxCount() {
         int maxCount = RakeLoggerConfig.MAX_TRACK_COUNT;
 
         for (int i = 0; i < maxCount; i++) {
             logger.track(json);
         }
 
+        // previous N log should be sent
         logger.track(json);
 
         assertEquals(1, logger.getCount());
     }
 
     @Test
-    public void testLambda() {
-        List<String> arr = new ArrayList<>();
-        arr.add("abc");
-        arr.add("def");
-        arr.add("a");
+    public void testResponseShouldBe200() {
+        logger.track(json);
 
-        System.out.println(arr);
-        Collections.sort(arr, (str1, str2) -> str1.compareTo(str2));
-        System.out.println(arr);
+
     }
 }

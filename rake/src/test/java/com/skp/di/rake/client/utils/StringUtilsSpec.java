@@ -7,6 +7,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import static org.junit.Assert.assertEquals;
 
 @RunWith(JUnit4.class)
@@ -39,5 +43,14 @@ public class StringUtilsSpec {
         assertEquals("1@2@3", StringUtils.join(new String[]{"", "1", "", "2", "3", null, ""}, "@"));
 
         assertEquals("123", StringUtils.join(new String[]{"", "1", "", "2", "3", null, ""}, null));
+    }
+
+    // TODO: research potential performance problems
+    @Test
+    public void testInputStreamToString() {
+        InputStream is = new ByteArrayInputStream("Hello World".getBytes());
+
+        String converted = StringUtils.toString(is);
+        assertEquals("Hello World", converted);
     }
 }

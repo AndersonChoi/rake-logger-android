@@ -52,4 +52,5 @@ dependencies {
     testCompile 'org.robolectric:robolectric:3.0-rc2'
     testCompile 'junit:junit:4.12'
     testCompile 'com.squareup.okhttp:mockwebserver:2.3.0'
+    testCompile 'commons-io:commons-io:2.4'
 }
