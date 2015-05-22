@@ -28,7 +28,7 @@ android {
         minSdkVersion 9
         targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName "0.4"
     }
     buildTypes {
         release {
@@ -54,3 +54,29 @@ dependencies {
     testCompile 'com.squareup.okhttp:mockwebserver:2.3.0'
     testCompile 'commons-io:commons-io:2.4'
 }
+
+def configFilePath = project.buildscript.sourceFile.parent +
+        "/src/main/java/com/skp/di/rake/client/config/RakeMetaConfig.java"
+
+task updateRakeVersion(type: Copy) {
+
+    String v = android.defaultConfig.versionName
+
+    def pattern = ~/"android_(.)*"/
+    def newVersion = "\"android_${v}\""
+
+    def configFile = new File(configFilePath)
+
+    String content = configFile.getText('UTF-8')
+    content = content.replaceAll(pattern, newVersion) /* replace version number */
+
+    // validate rake version
+    String replacedVersion = content.find(pattern)
+    assert(newVersion == replacedVersion)
+
+    configFile.write(content, 'UTF-8')
+
+    println "[INFO] version number in RakeMetaConfig.java replace with $v"
+}
+
+tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn updateRakeVersion }
