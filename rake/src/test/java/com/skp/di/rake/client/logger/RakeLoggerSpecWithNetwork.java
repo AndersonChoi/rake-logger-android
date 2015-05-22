@@ -1,6 +1,6 @@
 package com.skp.di.rake.client.logger;
 
-import com.skp.di.rake.client.config.RakeLoggerConfig;
+import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -129,7 +129,7 @@ public class RakeLoggerSpecWithNetwork {
 
     @Test
     public void testTrackedLogCannotExceedMaxCount() {
-        int maxCount = RakeLoggerConfig.MAX_TRACK_COUNT;
+        int maxCount = RakeMetaConfig.MAX_TRACK_COUNT;
 
         for (int i = 0; i < maxCount; i++) {
             logger.track(json);

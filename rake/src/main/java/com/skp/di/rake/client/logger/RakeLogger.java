@@ -1,6 +1,6 @@
 package com.skp.di.rake.client.logger;
 
-import com.skp.di.rake.client.config.RakeLoggerConfig;
+import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.RakeProtocol;
@@ -11,6 +11,7 @@ import com.skp.di.rake.client.protocol.exception.NotRegisteredRakeTokenException
 import com.skp.di.rake.client.protocol.exception.RakeException;
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
+import com.skp.di.rake.client.utils.Logger;
 import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.HttpResponse;
@@ -35,7 +36,7 @@ import java.util.List;
 public class RakeLogger implements Rake {
 
     private RakeDao dao;
-    private String endPoint = RakeLoggerConfig.END_POINT;
+    private String endPoint = RakeMetaConfig.END_POINT;
 
     public RakeLogger(RakeDao dao) {
         this.dao = dao;
@@ -46,7 +47,7 @@ public class RakeLogger implements Rake {
         if (null == log) return;
         if (log.toString().equals("{\"\":\"\"}")) return;
 
-        if (RakeLoggerConfig.MAX_TRACK_COUNT == dao.getCount())
+        if (RakeMetaConfig.MAX_TRACK_COUNT == dao.getCount())
             flush();
 
         dao.add(log);
@@ -61,8 +62,8 @@ public class RakeLogger implements Rake {
     public String flush() {
         List<JSONObject> tracked = dao.clear();
 
-        /* createBody returns json string */
-        String body = createBody(tracked);
+        /* createRequestBody returns json string */
+        String body = createRequestBody(tracked);
         String responseMessage = null;
 
         if (null != body) responseMessage = send(body);
@@ -77,15 +78,16 @@ public class RakeLogger implements Rake {
         try {
             HttpResponse res = executePost(body);
             responseBody = convertHttpResponseToString(res);
-            int statusCode = res.getStatusLine().getStatusCode();
 
+            int statusCode = res.getStatusLine().getStatusCode();
             handleRakeException(statusCode, responseBody);
+
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e("Can't send message to server", e);
         } catch (RakeException e) {
             throw e; /* to support test */
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e("Uncaught exception occurred", e);
         }
 
         return responseBody;
@@ -95,19 +97,19 @@ public class RakeLogger implements Rake {
         try {
             verifyResponse(statusCode, responseBody);
         } catch (RakeProtocolBrokenException e) {
-            e.printStackTrace();
+            Logger.e(e);
         } catch (InsufficientJsonFieldException e) {
-            e.printStackTrace();
+            Logger.e(e);
         } catch (InvalidJsonSyntaxException e) {
-            e.printStackTrace();
+            Logger.e(e);
         } catch (NotRegisteredRakeTokenException e) {
-            e.printStackTrace();
+            Logger.e(e);
         } catch (WrongRakeTokenUsageException e) {
-            e.printStackTrace();
+            Logger.e(e);
         } catch (InvalidEndPointException e) {
-            e.printStackTrace();
+            Logger.e(e);
         } catch (InternalServerErrorException e) {
-            e.printStackTrace();
+            Logger.e(e);
         }
     }
 
@@ -184,6 +186,8 @@ public class RakeLogger implements Rake {
         try {
             is = hr.getEntity().getContent();
             responseMessage = StringUtils.toString(is);
+        } catch(IOException e) {
+            throw e;
         } finally {
             StringUtils.closeQuietly(is);
         }
@@ -191,7 +195,7 @@ public class RakeLogger implements Rake {
         return responseMessage;
     }
 
-    private String createBody(List<JSONObject> tracked) {
+    private String createRequestBody(List<JSONObject> tracked) {
         if (0 == tracked.size()) return null;
 
         Iterator<JSONObject> i = tracked.iterator();
@@ -206,9 +210,8 @@ public class RakeLogger implements Rake {
 
         try {
             flushed.put("data", dataField);
-        } catch(JSONException e) {
-            e.printStackTrace();
-            return null;
+        } catch (JSONException e) {
+            Logger.e("Can't create request body", e);
         }
 
         String body = flushed.toString();
@@ -218,8 +221,8 @@ public class RakeLogger implements Rake {
 
     private HttpClient createHttpClient() {
         HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, RakeLoggerConfig.CONNECTION_TIMEOUT);
-        HttpConnectionParams.setSoTimeout(params, RakeLoggerConfig.SOCKET_TIMEOUT);
+        HttpConnectionParams.setConnectionTimeout(params, RakeMetaConfig.CONNECTION_TIMEOUT);
+        HttpConnectionParams.setSoTimeout(params, RakeMetaConfig.SOCKET_TIMEOUT);
         HttpClient client = new DefaultHttpClient(params);
 
         return client;
@@ -232,7 +235,7 @@ public class RakeLogger implements Rake {
         try {
             se = new StringEntity(body);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Logger.e("Can't build StringEntity", e);
         }
 
         post.setEntity(se);

@@ -1,3 +1,28 @@
+### Day 6
+
+- ~~printStackTrace 제거~~
+- ~~Log Wrapping 하기.~~
+- API 로 노출되는 부분이 있어야하지 않을까?
+
+- Gradle automatic version upgrade
+- 클래스패스에서 동적으로 Config 구현체 찾아서
+
+- Token, `Dev` 모드일 경우 바로 플러시 해야한다.
+- Token 별로 인스턴스를 생성해야 한다.
+- UserConfig?
+
+### Next
+
+
+- 별도의 스레드로 동작해야 한다. DAO Multithreaded
+- 스케쥴러를 설정할 수 있어야 한다.
+
+- HTTPS
+
+- 셔틀과 같이 쓰여야 한다.
+- CompressField
+- Base64
+
 ### Day 5
 
 - ~~MockHttpClient~~
@@ -8,23 +33,8 @@
 - ~~RakeProtocol~~
 - ~~RakeProtocolException~~
 
-- ~~ 500 404 는 ErrorCode 가 아니라 StatusCode 로 구분해야.~~
+- ~~500 404 는 ErrorCode 가 아니라 StatusCode 로 구분해야~~
 
-### Next
-
-- printStackTrace 제거
-- Log Wrapping 하기.
-- Base64
-
-- Gradle automatic version upgrade
-- HTTPS
-- 클래스패스에서 동적으로 Config 구현체 찾아서
-- Token, `Dev` 모드일 경우 바로 플러시 해야한다.
-- 별도의 스레드로 동작해야 한다. DAO Multithreaded
-- 스케쥴러를 설정할 수 있어야 한다.
-- 셔틀과 같이 쓰여야 한다.
-- CompressField
-- API 로 노출되는 부분이 있어야하지 않을까?
 
 ### Day 4
 
