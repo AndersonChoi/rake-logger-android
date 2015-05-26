@@ -29,12 +29,12 @@ public class RakeLoggerSpecWithNetwork {
 
     Rake logger;
     JSONObject json ;
-
     MockWebServer server;
+    String token = "token1";
 
     @Before
     public void setUp() throws IOException, JSONException {
-        logger = RakeFactory.getLogger(RakeLoggerSpecWithNetwork.class);
+        logger = RakeFactory.getLogger(token, null);
         logger.clear();
         json = new JSONObject();
 
@@ -64,6 +64,9 @@ public class RakeLoggerSpecWithNetwork {
         logger.track(json);
         String flushed = logger.flush();
 
+        /* if flushed successfully, returned string should not be null */
+        assertNotNull(flushed);
+
         RecordedRequest req = server.takeRequest();
 
         // header assert
@@ -79,7 +82,7 @@ public class RakeLoggerSpecWithNetwork {
         JSONObject expected = new JSONObject();
         expected.put("data", dataField);
 
-        assertNotNull(flushed);
+        assertEquals(expected.toString(), req.getBody().readUtf8());
     }
 
     @Test
@@ -97,15 +100,6 @@ public class RakeLoggerSpecWithNetwork {
     public void testFlushShouldSendWhenLogIsEmpty() throws IOException, InterruptedException {
         String flushed = logger.flush();
         assertNull(flushed);
-    }
-
-    @Test
-    public void testSingletonLogger() {
-        Rake logger2 = RakeFactory.getLogger(RakeLoggerSpecWithNetwork.class);
-        assertTrue(logger == logger2);
-
-        Rake logger3 = RakeFactory.getLogger(Integer.class);
-        assertFalse(logger == logger3);
     }
 
     @Test

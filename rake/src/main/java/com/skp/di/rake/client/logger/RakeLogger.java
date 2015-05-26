@@ -1,6 +1,7 @@
 package com.skp.di.rake.client.logger;
 
 import com.skp.di.rake.client.config.RakeMetaConfig;
+import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.RakeProtocol;

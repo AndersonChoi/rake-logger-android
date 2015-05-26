@@ -31,7 +31,7 @@ public class RakeLoggerHttpResponseSpec {
 
     @Before
     public void setUp() throws JSONException {
-        logger = TestRakeFactory.getLogger(RakeLoggerHttpResponseSpec.class);
+        logger = TestRakeFactory.getLogger("token", null);
 
         json = new JSONObject();
         json.put("rake_lib", "0.0.1");

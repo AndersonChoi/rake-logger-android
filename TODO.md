@@ -1,27 +1,32 @@
-### Day 6
+### Day 7
 
-- ~~printStackTrace 제거~~
-- ~~Log Wrapping 하기.~~
-- API 로 노출되는 부분이 있어야하지 않을까?
-
-- Gradle automatic version upgrade
-- 클래스패스에서 동적으로 Config 구현체 찾아서
-
+- ~~Token 별로 인스턴스를 생성해야 한다~~
 - Token, `Dev` 모드일 경우 바로 플러시 해야한다.
-- Token 별로 인스턴스를 생성해야 한다.
-- UserConfig?
+
+- ~~RakeUserConfig - time, Mode~~
+- ~~Network module 분리~~
+
+- 셔틀과 같이 쓰여야 한다.
+- CompressField
 
 ### Next
 
+- TestLoggerFactory 와 LoggerFactory 비 연동
 
 - 별도의 스레드로 동작해야 한다. DAO Multithreaded
 - 스케쥴러를 설정할 수 있어야 한다.
 
 - HTTPS
 
-- 셔틀과 같이 쓰여야 한다.
-- CompressField
-- Base64
+- API 로 노출되는 부분이 있어야하지 않을까?
+
+
+### Day 6
+
+- ~~printStackTrace 제거~~
+- ~~Log Wrapping 하기.~~
+
+- ~~automatic version upgrade using gradle~~
 
 ### Day 5
 
@@ -34,7 +39,6 @@
 - ~~RakeProtocolException~~
 
 - ~~500 404 는 ErrorCode 가 아니라 StatusCode 로 구분해야~~
-
 
 ### Day 4
 
