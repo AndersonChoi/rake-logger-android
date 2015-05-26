@@ -1,16 +1,12 @@
 package mock;
 
-import com.skp.di.rake.client.logger.RakeLogger;
-import com.skp.di.rake.client.persistent.RakeDao;
+import com.skp.di.rake.client.network.RakeHttpClient;
 
 import org.apache.http.HttpResponse;
 
 import java.io.IOException;
 
-public class TestRakeLogger extends RakeLogger {
-    public TestRakeLogger(RakeDao dao) {
-        super(dao);
-    }
+public class TestRakeHttpClient extends RakeHttpClient {
 
     @Override
     protected HttpResponse executePost(String body) throws IOException {
@@ -22,5 +18,3 @@ public class TestRakeLogger extends RakeLogger {
         verifyResponse(statusCode, responseBody);
     }
 }
-
-

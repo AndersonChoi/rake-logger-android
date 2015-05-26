@@ -1,6 +1,7 @@
 package com.skp.di.rake.client.logger;
 
 import com.skp.di.rake.client.config.RakeUserConfig;
+import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
 
@@ -23,8 +24,10 @@ public final class RakeFactory {
         if (loggerMap.containsKey(token)) {
             logger = loggerMap.get(token);
         } else {
-            RakeDao dao = new RakeDaoMemory();
-            logger = new RakeLogger(dao);
+            RakeDao dao           = new RakeDaoMemory();
+            RakeHttpClient client = new RakeHttpClient();
+
+            logger = new RakeLogger(dao, client);
             loggerMap.put(token, logger);
         }
 
