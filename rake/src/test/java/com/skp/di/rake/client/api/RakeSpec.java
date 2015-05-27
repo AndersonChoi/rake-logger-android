@@ -1,6 +1,10 @@
-package com.skp.di.rake.client.logger;
+package com.skp.di.rake.client.api;
 
+import com.skp.di.rake.api.Rake;
+import com.skp.di.rake.api.RakeFactory;
+import com.skp.di.rake.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
+import com.skp.di.rake.client.mock.SampleRakeConfig1;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -25,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE, emulateSdk = 17, reportSdk = 19)
-public class RakeLoggerSpecWithNetwork {
+public class RakeSpec {
 
     Rake logger;
     JSONObject json ;
@@ -34,7 +38,8 @@ public class RakeLoggerSpecWithNetwork {
 
     @Before
     public void setUp() throws IOException, JSONException {
-        logger = RakeFactory.getLogger(token, null);
+        RakeUserConfig config = new SampleRakeConfig1();
+        logger = RakeFactory.getLogger(config);
         logger.clear();
         json = new JSONObject();
 
@@ -138,7 +143,5 @@ public class RakeLoggerSpecWithNetwork {
     @Test
     public void testResponseShouldBe200() {
         logger.track(json);
-
-
     }
 }

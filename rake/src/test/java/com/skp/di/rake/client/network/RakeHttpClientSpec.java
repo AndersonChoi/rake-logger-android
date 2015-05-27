@@ -1,6 +1,9 @@
-package com.skp.di.rake.client.logger;
+package com.skp.di.rake.client.network;
 
 
+import com.skp.di.rake.api.Rake;
+import com.skp.di.rake.api.RakeUserConfig;
+import com.skp.di.rake.client.mock.SampleRakeConfig1;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
@@ -9,9 +12,6 @@ import com.skp.di.rake.client.protocol.exception.InvalidJsonSyntaxException;
 import com.skp.di.rake.client.protocol.exception.NotRegisteredRakeTokenException;
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
-
-import mock.MockServer;
-import mock.TestRakeFactory;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,16 +22,20 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import com.skp.di.rake.client.mock.MockRakeFactory;
+import com.skp.di.rake.client.mock.MockServer;
+
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest=Config.NONE)
-public class RakeLoggerHttpResponseSpec {
+public class RakeHttpClientSpec {
 
     Rake logger;
     JSONObject json;
 
     @Before
     public void setUp() throws JSONException {
-        logger = TestRakeFactory.getLogger("token", null);
+        RakeUserConfig config = new SampleRakeConfig1();
+        logger = MockRakeFactory.getLogger(config);
 
         json = new JSONObject();
         json.put("rake_lib", "0.0.1");

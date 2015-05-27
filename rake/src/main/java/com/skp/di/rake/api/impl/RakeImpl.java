@@ -1,5 +1,6 @@
-package com.skp.di.rake.client.logger;
+package com.skp.di.rake.api.impl;
 
+import com.skp.di.rake.api.Rake;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
@@ -12,13 +13,11 @@ import org.json.JSONObject;
 import java.util.Iterator;
 import java.util.List;
 
-public class RakeLogger implements Rake {
-    private String endPoint = RakeMetaConfig.END_POINT;
-
+public class RakeImpl implements Rake {
     private RakeDao dao;
     private RakeHttpClient client;
 
-    public RakeLogger(RakeDao dao, RakeHttpClient client) {
+    public RakeImpl(RakeDao dao, RakeHttpClient client) {
         this.dao = dao;
         this.client = client;
     }
@@ -76,7 +75,7 @@ public class RakeLogger implements Rake {
 
         return body;
     }
-    
+
     @Override
     public void clear() {
         dao.clear();

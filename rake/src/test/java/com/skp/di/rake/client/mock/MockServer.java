@@ -1,4 +1,4 @@
-package mock;
+package com.skp.di.rake.client.mock;
 
 import com.skp.di.rake.client.protocol.RakeProtocol;
 

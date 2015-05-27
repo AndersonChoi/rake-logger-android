@@ -1,4 +1,4 @@
-package com.skp.di.rake.client.logger;
+package com.skp.di.rake.api;
 
 import org.json.JSONObject;
 

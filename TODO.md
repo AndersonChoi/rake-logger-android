@@ -1,26 +1,31 @@
-### Day 7
+### Day 8
 
-- ~~Token 별로 인스턴스를 생성해야 한다~~
+- HTTPS
 - Token, `Dev` 모드일 경우 바로 플러시 해야한다.
-
-- ~~RakeUserConfig - time, Mode~~
-- ~~Network module 분리~~
-
 - 셔틀과 같이 쓰여야 한다.
 - CompressField
 
 ### Next
 
-- TestLoggerFactory 와 LoggerFactory 비 연동
+- Flush Interval per Config
+> Rake Instance 마다, flushInterval 을 다르게 할지는 좀 더 생각해볼 문제.
 
 - 별도의 스레드로 동작해야 한다. DAO Multithreaded
 - 스케쥴러를 설정할 수 있어야 한다.
 
-- HTTPS
+### Day 7
 
-- API 로 노출되는 부분이 있어야하지 않을까?
+- ~~Token 별로 인스턴스를 생성해야 한다~~
+- ~~Live, Dev Token 을 위한 지원~~
+- ~~API 로 노출되는 부분이 있어야하지 않을까?~~
 
+- ~~RakeUserConfig hashCode, Equals~~
+- ~~RakeUserConfig - time, Mode~~
+- ~~Network module 분리~~
 
+- ~~TestLoggerFactory 와 LoggerFactory 연동~~
+> 자바에서는 static 에 대한 다형성을 지원하지 않음. Global 로 취급하기 때문. 인터페이스에서도 마찬가
+지. JVM8 부터는 인터페이스에 스태틱 메소드가 추가된 것으로 보임.
 ### Day 6
 
 - ~~printStackTrace 제거~~
