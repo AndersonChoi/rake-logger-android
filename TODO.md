@@ -1,17 +1,28 @@
 ### Day 8
 
-- HTTPS
-- Token, `Dev` 모드일 경우 바로 플러시 해야한다.
+- 강제로 flush 하려면?
+- Formatter 분리.
+
+- 조절가능한 Timer 를 갖는 Observable 을 만든다.
+- onStop, onResume 을 zip 해서 타이머를 돌려야한다.
+- 별도의 스레드로 동작해야 한다. subscribeOn, observeOn
+
 - 셔틀과 같이 쓰여야 한다.
 - CompressField
 
+- 스케쥴러를 설정할 수 있어야 한다.
+- Token, `Dev` 모드일 경우 바로 플러시 해야한다.
+
 ### Next
+
+- HTTPClient -> HTTPUrlConnection 으로 변경하려면 TestClient 를 변경해야.
+- HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
 
 - Flush Interval per Config
 > Rake Instance 마다, flushInterval 을 다르게 할지는 좀 더 생각해볼 문제.
 
-- 별도의 스레드로 동작해야 한다. DAO Multithreaded
-- 스케쥴러를 설정할 수 있어야 한다.
+- DAOSqlite 구현
+- DAO multithread 고려
 
 ### Day 7
 
@@ -26,6 +37,7 @@
 - ~~TestLoggerFactory 와 LoggerFactory 연동~~
 > 자바에서는 static 에 대한 다형성을 지원하지 않음. Global 로 취급하기 때문. 인터페이스에서도 마찬가
 지. JVM8 부터는 인터페이스에 스태틱 메소드가 추가된 것으로 보임.
+
 ### Day 6
 
 - ~~printStackTrace 제거~~

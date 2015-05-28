@@ -1,6 +1,6 @@
 package com.skp.di.rake.client.mock;
 
-import com.skp.di.rake.api.RakeUserConfig;
+import com.skp.di.rake.client.api.RakeUserConfig;
 
 public class SampleRakeConfig2 extends RakeUserConfig {
 

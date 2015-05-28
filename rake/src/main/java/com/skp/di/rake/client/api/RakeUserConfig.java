@@ -1,4 +1,4 @@
-package com.skp.di.rake.api;
+package com.skp.di.rake.client.api;
 
 import com.skp.di.rake.client.config.RakeMetaConfig;
 

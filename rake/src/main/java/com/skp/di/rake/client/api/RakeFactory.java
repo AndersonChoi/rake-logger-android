@@ -1,9 +1,6 @@
-package com.skp.di.rake.api;
+package com.skp.di.rake.client.api;
 
-import com.skp.di.rake.api.Rake;
-import com.skp.di.rake.api.RakeFactory;
-import com.skp.di.rake.api.RakeUserConfig;
-import com.skp.di.rake.api.impl.RakeImpl;
+import com.skp.di.rake.client.api.impl.RakeImpl;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;

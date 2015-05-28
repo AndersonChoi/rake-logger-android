@@ -15,6 +15,7 @@ import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -45,6 +46,10 @@ public class RakeHttpClient {
             int statusCode = res.getStatusLine().getStatusCode();
             handleRakeException(statusCode, responseBody);
 
+        } catch(UnsupportedEncodingException e) {
+            Logger.e("Cant' build StringEntity using body", e);
+        } catch(ClientProtocolException e) {
+            Logger.e("Can't send message to server", e);
         } catch (IOException e) {
             Logger.e("Can't send message to server", e);
         } catch (RakeException e) {
@@ -129,14 +134,13 @@ public class RakeHttpClient {
         }
     }
 
-    protected HttpResponse executePost(String body) throws IOException {
-        HttpClient client = createHttpClient();
-        HttpPost post   = createHttpPost(body);
+    protected HttpResponse executePost(String body)
+            throws UnsupportedEncodingException, IOException {
+        HttpClient   client = createHttpClient();
+        StringEntity se     = createEntity(body);
+        HttpPost     post   = createHttpPost(se);
 
-        HttpResponse response = null;
-
-        /* send post message to server */
-        response = client.execute(post);
+        HttpResponse response = client.execute(post);
 
         return response;
     }
@@ -149,11 +153,8 @@ public class RakeHttpClient {
         try {
             is = hr.getEntity().getContent();
             responseMessage = StringUtils.toString(is);
-        } catch(IOException e) {
-            throw e;
-        } finally {
-            StringUtils.closeQuietly(is);
-        }
+        } catch(IOException e) { throw e;
+        } finally { StringUtils.closeQuietly(is); }
 
         return responseMessage;
     }
@@ -167,16 +168,8 @@ public class RakeHttpClient {
         return client;
     }
 
-    private HttpPost createHttpPost(String body) {
+    private HttpPost createHttpPost(StringEntity se) {
         HttpPost post = new HttpPost(endPoint);
-        StringEntity se = null;
-
-        try {
-            se = new StringEntity(body);
-        } catch (UnsupportedEncodingException e) {
-            Logger.e("Can't build StringEntity", e);
-        }
-
         post.setEntity(se);
         post.setHeader("Content-Type", "application/json");
         post.setHeader("Accept", "application/json");
@@ -184,4 +177,7 @@ public class RakeHttpClient {
         return post;
     }
 
+    private StringEntity createEntity(String body) throws UnsupportedEncodingException {
+        return new StringEntity(body);
+    }
 }

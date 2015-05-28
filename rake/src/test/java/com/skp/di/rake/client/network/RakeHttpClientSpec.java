@@ -1,8 +1,8 @@
 package com.skp.di.rake.client.network;
 
 
-import com.skp.di.rake.api.Rake;
-import com.skp.di.rake.api.RakeUserConfig;
+import com.skp.di.rake.client.api.Rake;
+import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.mock.SampleRakeConfig1;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
