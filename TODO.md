@@ -1,6 +1,8 @@
 ### Day 8
 
-- 강제로 flush 하려면?
+- 강제로 flush 하려면? -> subject
+- subject 는 hot observable
+
 - Formatter 분리.
 
 - 조절가능한 Timer 를 갖는 Observable 을 만든다.
@@ -86,7 +88,7 @@
 - ~~한 테스트가 다른 테스트에 의존한다. track 을 테스트할 수 있는 방법을 찾아야한다.~~
 - ~~먼저 Track 의 내부 구조를 테스트해야 한다.~~
 - ~~LoggerBuffer 를 추가했으나, 이걸 테스트하기 위해 Logger 내부구조를 테스트한다. MOCK 을 사용해볼까?~~
-- ~~track이 addToLog 를 호출하게끔 했다. track 의 책임을 떠올려봤다.~~
+- ~~track 이 addToLog 를 호출하게끔 했다. track 의 책임을 떠올려봤다.~~
 - ~~internal state 를 어떻게 테스팅해야할까? powermock 을 쓰는것은 좋은 방법은 아닌것 같다.~~
 - ~~flush 를 호출했을 때 그 결과가 여러개 리턴되야 한다.~~
 - ~~track 과 flush 가 List 가 아니라 Array 를 리턴하도록 했다. 내부 구조를 수정할 수 없도록 하는관점에서 좋다.~~
