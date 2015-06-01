@@ -1,21 +1,18 @@
-### Day 8
+### Day 9
 
-- 강제로 flush 하려면? -> subject
-- subject 는 hot observable
-
-- Formatter 분리.
-
-- 조절가능한 Timer 를 갖는 Observable 을 만든다.
 - onStop, onResume 을 zip 해서 타이머를 돌려야한다.
 - 별도의 스레드로 동작해야 한다. subscribeOn, observeOn
 
+
+- 스케쥴러를 설정할 수 있어야 한다. -> Timer Observable 로
+
+### Next
+
+- Formatter 분리.
 - 셔틀과 같이 쓰여야 한다.
 - CompressField
 
-- 스케쥴러를 설정할 수 있어야 한다.
 - Token, `Dev` 모드일 경우 바로 플러시 해야한다.
-
-### Next
 
 - HTTPClient -> HTTPUrlConnection 으로 변경하려면 TestClient 를 변경해야.
 - HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
@@ -24,7 +21,17 @@
 > Rake Instance 마다, flushInterval 을 다르게 할지는 좀 더 생각해볼 문제.
 
 - DAOSqlite 구현
-- DAO multithread 고려
+- DAO multithread 고려 -> Observable subscribeOn 내에서 일어나면, synchronization 필요 X
+
+### Day 8
+
+- ~~trackable~~
+- ~~flushable~~
+- ~~timer~~
+- ~~코어 로직을 Observable 과 Subject 로 만들기~~
+- ~~첫번째 타이머 돌기 전에도 Flush 가능하게 만들기~~
+- ~~조절가능한 Timer 를 갖는 Observable 을 만든다.~~
+
 
 ### Day 7
 

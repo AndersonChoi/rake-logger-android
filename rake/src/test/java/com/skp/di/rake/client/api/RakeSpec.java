@@ -25,7 +25,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, emulateSdk = 17, reportSdk = 19)
 public class RakeSpec {
 
     Rake logger;

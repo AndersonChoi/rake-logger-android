@@ -17,7 +17,7 @@ apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.0.1"
+    buildToolsVersion '21.0.1'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -48,12 +48,10 @@ retrolambda {
 dependencies {
     compile 'com.android.support:appcompat-v7:22.1.1'
     compile fileTree(dir: 'libs', include: ['*.jar'])
-
     compile 'org.json:json:20141113'
     compile 'io.reactivex:rxjava:1.0.11'
-
     testCompile fileTree(dir: 'src/test/libs', include: ['*.jar'])
-    testCompile 'org.robolectric:robolectric:3.0-rc2'
+    testCompile 'org.robolectric:robolectric:3.0-rc3'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-all:1.10.19'
     testCompile 'com.squareup.okhttp:mockwebserver:2.3.0'
