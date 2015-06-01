@@ -1,5 +1,7 @@
 package com.skp.di.rake.client.api;
 
+import com.skp.di.rake.client.api.impl.RakeCore;
+import com.skp.di.rake.client.api.impl.RakeImpl;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.mock.SampleRakeConfig1;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -23,121 +25,39 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @RunWith(RobolectricTestRunner.class)
+@Config(manifest=Config.NONE)
 public class RakeSpec {
 
-    Rake logger;
+    Rake rake;
     JSONObject json ;
-    MockWebServer server;
-    String token = "token1";
+    RakeUserConfig config;
+    RakeCore mockCore;
 
     @Before
     public void setUp() throws IOException, JSONException {
-        RakeUserConfig config = new SampleRakeConfig1();
-        logger = RakeFactory.getLogger(config);
-        logger.clear();
+        config = new SampleRakeConfig1();
+        mockCore = mock(RakeCore.class);
+        rake = new RakeImpl(config, mockCore);
+
         json = new JSONObject();
-
-        json.put("version", "0.1");
-
-        // mock server init
-
-        JSONObject body = new JSONObject();
-        body.put("errorCode", 20000);
-
-        server = new MockWebServer();
-        server.enqueue(new MockResponse()
-                .setResponseCode(200)
-                .setBody(body.toString()));
-
-        server.start(9001);
-    }
-
-    @After
-    public void tearDown() throws IOException {
-        server.shutdown();
+        json.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
     }
 
     @Test
-    public void testFlushShouldPost() throws InterruptedException, JSONException{
-        logger.track(json);
-        logger.track(json);
-        String flushed = logger.flush();
-
-        /* if flushed successfully, returned string should not be null */
-        assertNotNull(flushed);
-
-        RecordedRequest req = server.takeRequest();
-
-        // header assert
-        assertEquals("POST /track HTTP/1.1", req.getRequestLine());
-        assertEquals("application/json", req.getHeader("Content-Type"));
-        assertEquals("application/json", req.getHeader("Accept"));
-
-        // body assert
-        JSONArray dataField = new JSONArray();
-        dataField.put(json);
-        dataField.put(json);
-
-        JSONObject expected = new JSONObject();
-        expected.put("data", dataField);
-
-        assertEquals(expected.toString(), req.getBody().readUtf8());
-    }
-
-    @Test
-    public void testFlushShouldDecreaseLogCount() {
-        logger.track(json);
-        logger.track(json);
-        assertEquals(2, logger.getCount());
-
-        // log count assert
-        logger.flush();
-        assertEquals(0, logger.getCount());
-    }
-
-    @Test
-    public void testFlushShouldSendWhenLogIsEmpty() throws IOException, InterruptedException {
-        String flushed = logger.flush();
-        assertNull(flushed);
-    }
-
-    @Test
-    public void testTrackShouldIncreaseLogCount() {
-        logger.track(json);
-        assertEquals(1, logger.getCount());
-    }
-
-    @Test
-    public void testTrackShouldNotAllowNullLog() throws JSONException {
-        logger.track(null);
-        assertEquals(0, logger.getCount());
+    public void testShouldNotTrackNullAndEmptyLog() throws JSONException {
+        rake.track(null);
 
         // the json having "" as keys are treated as null log
-        JSONObject nullLog = new JSONObject();
-        nullLog.put("", "");
-        logger.track(nullLog);
+        JSONObject empty = new JSONObject();
+        empty.put("", "");
+        rake.track(empty);
 
-        assertEquals(0, logger.getCount());
-    }
-
-    @Test
-    public void testTrackedLogCannotExceedMaxCount() {
-        int maxCount = RakeMetaConfig.MAX_TRACK_COUNT;
-
-        for (int i = 0; i < maxCount; i++) {
-            logger.track(json);
-        }
-
-        // previous N log should be sent
-        logger.track(json);
-
-        assertEquals(1, logger.getCount());
-    }
-
-    @Test
-    public void testResponseShouldBe200() {
-        logger.track(json);
+        verify(mockCore, never()).track(any());
     }
 }

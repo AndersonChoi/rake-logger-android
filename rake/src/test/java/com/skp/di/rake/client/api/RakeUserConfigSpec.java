@@ -5,6 +5,7 @@ import com.skp.di.rake.client.config.RakeMetaConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import com.skp.di.rake.client.mock.SampleRakeConfig1;
 import com.skp.di.rake.client.mock.SampleRakeConfig2;
@@ -14,32 +15,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
+@Config(manifest=Config.NONE)
 public class RakeUserConfigSpec {
-
-
     @Test
     public void testConfigShouldReturnProperTokenByRunningMode() {
         RakeUserConfig config = new SampleRakeConfig1();
 
         assertEquals(RakeUserConfig.Mode.DEV, config.getRunningMode());
         assertEquals(config.getDevToken(), config.getToken());
-    }
-
-    @Test
-    public void testFlushIntervalCanBeConfiguredByUser() {
-        RakeUserConfig config = new SampleRakeConfig1();
-
-        assertEquals(
-                RakeMetaConfig.DEFAULT_FLUSH_INTERVAL,
-                RakeUserConfig.getFlushInterval());
-
-        RakeUserConfig.setFlushInterval(20);
-        assertEquals(20, RakeUserConfig.getFlushInterval());
-
-        /* sub classes are also to modify flush interval */
-        SampleRakeConfig1.setFlushInterval(10);
-        assertEquals(10, config.getFlushInterval());
-        assertEquals(10, RakeUserConfig.getFlushInterval());
     }
 
     @Test

@@ -16,7 +16,7 @@ public class MockServer {
 
     static public final int ERROR_CODE_RAKE_PROTOCOL_BROKEN = 90001;
 
-    static private int errorCode;
+    static private int errorCode = RakeProtocol.ERROR_CODE_OK;
 
     static public void setErrorCode(int errorCode) {
         MockServer.errorCode = errorCode;
@@ -24,7 +24,6 @@ public class MockServer {
 
     /* mocking server action */
     static public HttpResponse respond() {
-
         return createResponse();
     }
 

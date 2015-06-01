@@ -12,4 +12,8 @@ public class Logger {
     static public void e(Throwable e) {
         Log.e(RakeMetaConfig.TAG, e.toString());
     }
+
+    static public void i(String message) {
+        Log.i(RakeMetaConfig.TAG, message);
+    }
 }

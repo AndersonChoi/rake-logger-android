@@ -114,7 +114,7 @@ public class RakeHttpClient {
             case RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE:
                 throw new WrongRakeTokenUsageException(responseBody);
 
-            default: throw new RakeProtocolBrokenException("");
+            default: throw new RakeProtocolBrokenException(responseBody);
         }
 
         return responseBody;

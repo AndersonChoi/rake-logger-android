@@ -3,22 +3,21 @@ package com.skp.di.rake.client.api;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 
 public abstract class RakeUserConfig {
-
-    static private int flushInterval = RakeMetaConfig.DEFAULT_FLUSH_INTERVAL; /* seconds */
-
-    static public int   getFlushInterval() { return flushInterval; }
-
-    static public void  setFlushInterval(int seconds) { flushInterval = seconds; }
+    /* function user should implement */
 
     abstract public Mode provideRunningMode();
     abstract public String provideDevToken();
     abstract public String provideLiveToken();
+    abstract public int provideFlushInterval();
+    abstract public int provideMaxLogTrackCount();
 
     /* wrapping functions for readability */
 
     public final Mode getRunningMode() { return provideRunningMode(); }
     public final String getDevToken()  { return provideDevToken();    }
     public final String getLiveToken() { return provideLiveToken();   }
+    public int getFlushInterval() { return provideFlushInterval(); }
+    public int getMaxLogTrackCount() { return provideMaxLogTrackCount(); }
 
     public final String getToken() {
         if (provideRunningMode() == Mode.DEV) return provideDevToken();

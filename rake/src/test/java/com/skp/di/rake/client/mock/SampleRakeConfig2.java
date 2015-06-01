@@ -14,4 +14,14 @@ public class SampleRakeConfig2 extends RakeUserConfig {
 
     @Override
     public String provideLiveToken() { return "live9194"; }
+
+    @Override
+    public int provideFlushInterval() {
+        return 60;
+    }
+
+    @Override
+    public int provideMaxLogTrackCount() {
+        return 5;
+    }
 }

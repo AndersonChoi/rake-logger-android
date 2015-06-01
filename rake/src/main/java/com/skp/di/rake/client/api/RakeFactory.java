@@ -1,5 +1,6 @@
 package com.skp.di.rake.client.api;
 
+import com.skp.di.rake.client.api.impl.RakeCore;
 import com.skp.di.rake.client.api.impl.RakeImpl;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
@@ -20,14 +21,16 @@ public class RakeFactory {
     static public Rake getLogger(RakeUserConfig config) {
 
         Rake logger;
+        RakeDao dao           = new RakeDaoMemory();
+        RakeHttpClient client = new RakeHttpClient();
+        RakeCore core         = RakeCore.getInstance(dao, client, config);
 
         if (loggerMap.containsKey(config)) {
             logger = loggerMap.get(config);
         } else {
-            RakeDao dao           = new RakeDaoMemory();
-            RakeHttpClient client = new RakeHttpClient();
-
-            logger = new RakeImpl(dao, client);
+            /// TODO remove config
+            // logger = new RakeImplWithScheduler(config, RakeCore.getInstance());
+            logger = new RakeImpl(config, core);
             loggerMap.put(config, logger);
         }
 

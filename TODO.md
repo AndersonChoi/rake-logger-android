@@ -1,18 +1,23 @@
 ### Day 9
 
+- ~~RakeCore 에서 filter flush if null~~
+- onErrorReturn 더 정교히
+- ~~subscribe 정책 세울 것.~~
+- ~~RakeCore.getInstance 에서 inject 할 것인지 정하기~~
+
 - onStop, onResume 을 zip 해서 타이머를 돌려야한다.
-- 별도의 스레드로 동작해야 한다. subscribeOn, observeOn
+- ~~별도의 스레드로 동작해야 한다. subscribeOn, observeOn~~
+- ~~스케쥴러를 설정할 수 있어야 한다. -> Timer Observable 로~~
+- ~~RakeUserConfig 내에서 provideFlushInterval, maxCount~~
 
-
-- 스케쥴러를 설정할 수 있어야 한다. -> Timer Observable 로
+- 셔틀과 같이 쓰여야 한다.
+- CompressField
+- ~~Formatter 분리~~ -> RakeProtocol. 비즈니스 로직은 Rake 에
+- RakeCore.returned 만들때 dev면 timer 제거하고, 즉시 flush
+- Token, `Dev` 모드일 경우 바로 플러시 해야한다. -> `RakeCore.returned` 를 build 옵션 주듯
 
 ### Next
 
-- Formatter 분리.
-- 셔틀과 같이 쓰여야 한다.
-- CompressField
-
-- Token, `Dev` 모드일 경우 바로 플러시 해야한다.
 
 - HTTPClient -> HTTPUrlConnection 으로 변경하려면 TestClient 를 변경해야.
 - HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
@@ -105,3 +110,134 @@
 - ~~RakeBasicLogger 가 RakeLogDaoSQLite 를 알고있다.~~
 
 
+```javascript
+// Shuttle String
+{
+   "log_version":"15.04.09:1.5.26:60",
+   "network_type":"",
+   "app_version":"",
+   "screen_width":"",
+   "device_id":"",
+   "sentinel_meta":{
+      "_$fieldOrder":{
+         "log_version":20,
+         "network_type":12,
+         "app_version":16,
+         "screen_width":9,
+         "device_id":3,
+         "resolution":8,
+         "recv_host":15,
+         "ip":14,
+         "os_version":7,
+         "recv_time":2,
+         "local_time":1,
+         "language_code":13,
+         "device_model":4,
+         "rake_lib_version":18,
+         "os_name":6,
+         "token":19,
+         "rake_lib":17,
+         "manufacturer":5,
+         "action":21,
+         "_$body":22,
+         "base_time":0,
+         "carrier_name":11,
+         "screen_height":10
+      },
+      "_$schemaId":"5538a7f3e4b0e5b461fc7737",
+      "_$projectId":"projectId",
+      "_$encryptionFields":[
+         "field1",
+         "field3"
+      ]
+   },
+   "resolution":"",
+   "recv_host":"",
+   "ip":"",
+   "os_version":"",
+   "recv_time":"",
+   "local_time":"",
+   "language_code":"",
+   "device_model":"",
+   "rake_lib_version":"",
+   "os_name":"",
+   "token":"",
+   "rake_lib":"",
+   "manufacturer":"",
+   "action":"action4",
+   "_$body":{
+      "field1":"field1 value",
+      "field4":"field4 value",
+      "field3":"field3 value"
+   },
+   "base_time":"",
+   "carrier_name":"",
+   "screen_height":""
+}
+```
+
+```javascript
+// flushed string
+{
+   "_$schemaId":"5538a7f3e4b0e5b461fc7737",
+   "properties":{
+      "network_type":"NOT WIFI",
+      "log_version":"15.04.09:1.5.26:60",
+      "screen_width":2560,
+      "app_version":"1.0_20150601_204916",
+      "device_id":"a8cac7a1ca580768",
+      "resolution":"1440*2560",
+      "recv_host":"",
+      "recv_time":"",
+      "os_version":"4.4.4",
+      "ip":"",
+      "local_time":"20150601204818702",
+      "device_model":"SM-N910S",
+      "language_code":"KR",
+      "rake_lib_version":"r0.5.0_c0.3.16",
+      "os_name":"Android",
+      "token":"17d7c63735d1d1ec81a97e4c44d47acc8420ed15",
+      "manufacturer":"samsung",
+      "rake_lib":"android",
+      "action":"action4",
+      "_$body":{
+         "field1":"field1 value",
+         "field4":"field4 value",
+         "field3":"field3 value"
+      },
+      "base_time":"20150601204818702",
+      "carrier_name":"SKTelecom",
+      "screen_height":1440
+   },
+   "_$encryptionFields":[
+      "field1",
+      "field3"
+   ],
+   "_$fieldOrder":{
+      "log_version":20,
+      "network_type":12,
+      "app_version":16,
+      "screen_width":9,
+      "device_id":3,
+      "resolution":8,
+      "recv_host":15,
+      "ip":14,
+      "os_version":7,
+      "recv_time":2,
+      "local_time":1,
+      "language_code":13,
+      "device_model":4,
+      "rake_lib_version":18,
+      "os_name":6,
+      "token":19,
+      "rake_lib":17,
+      "manufacturer":5,
+      "action":21,
+      "_$body":22,
+      "base_time":0,
+      "carrier_name":11,
+      "screen_height":10
+   },
+   "_$projectId":"projectId"
+}
+```
