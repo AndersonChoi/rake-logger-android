@@ -5,5 +5,5 @@ public abstract class RakeMetaConfig {
     static public final int CONNECTION_TIMEOUT = 3000;
     static public final int SOCKET_TIMEOUT = 120000;
     static public final String TAG = "RAKE";
-    static public final String RAKE_CLIENT_VERSION = "android_0.4";
+    static public final String RAKE_CLIENT_VERSION = "android_0.4.0";
 }

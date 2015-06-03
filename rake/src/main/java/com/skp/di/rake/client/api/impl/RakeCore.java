@@ -20,23 +20,20 @@ import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 public class RakeCore {
-    static private RakeCore instance;
-
     private RakeDao dao;
     private RakeHttpClient client;
 
-    private Observable<Integer>        timer;
     private PublishSubject<Integer>    flushable;
     private PublishSubject<JSONObject> trackable;
-    private Observable<String> returned;
 
-    private Subscription returnedSubscription;
+    private Observable<String> worker;
+    private Subscription subscription;
 
-    private RakeCore(RakeDao dao, RakeHttpClient client, RakeUserConfig config) {
+    public RakeCore(RakeDao dao, RakeHttpClient client, RakeUserConfig config) {
         this.dao    = dao;
         this.client = client;
 
-        this.timer = Observable
+        Observable<Integer> timer = Observable
                 .interval(config.getFlushInterval() ,TimeUnit.SECONDS)
                 .startWith(-1L)
                 .map(x -> null);
@@ -44,9 +41,46 @@ public class RakeCore {
         this.flushable = PublishSubject.create();
         this.trackable = PublishSubject.create();
 
-        /* TODO: if dev, no timer, flush immediately */
-        this.returned =
-                trackable.map(json -> {
+        // TODO: if dev, no timer, flush immediately
+        this.worker = buildWorker(timer, this.flushable, this.trackable, config);
+
+        // TODO: subscribe in Live
+        this.subscription = subscribe(this.subscription, this.worker, null,
+                new Observer<String>() {
+                    @Override
+                    public void onCompleted() {
+                        Logger.i("RakeCore onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        Logger.e("RakeCore.onError", t);
+                    }
+
+                    @Override
+                    public void onNext(String response) {
+                        Logger.i(response);
+                    }
+                });
+    }
+
+    private Observable<String> buildWorker(
+            Observable<Integer> timer,
+            PublishSubject<Integer> flushable,
+            PublishSubject<JSONObject> trackable,
+            RakeUserConfig config) {
+
+        Observable<String> incompleteWorker;
+
+        if (RakeUserConfig.Mode.DEV == config.getRunningMode()) {
+            incompleteWorker = trackable
+                    .map(json -> {
+                        String requestBody = RakeProtocol.buildRakeRequestBody(json);
+                        return client.send(requestBody);
+                    });
+        } else { /* Mode.Live */
+             incompleteWorker = trackable
+                .map(json -> {
                     dao.add(json);
                     return dao.getCount();
                 }).filter(count -> count == config.getMaxLogTrackCount())
@@ -57,45 +91,23 @@ public class RakeCore {
                     List<JSONObject> tracked = dao.clear();
                     String requestBody = RakeProtocol.buildRakeRequestBody(tracked);
                     return client.send(requestBody); /* return response */
-                }).filter(responseBody -> null != responseBody)
-                .onErrorReturn(t -> {
-                    // TODO: onErrorReturn
-                    Logger.e("Unhandled exception in RakeCore", t);
-                    return null;
-                });
+                }).filter(responseBody -> null != responseBody);
+        }
 
-
-        // TODO: subscribe in Live
-        subscribe(null, new Observer<String>() {
-            @Override
-            public void onCompleted() {
-                Logger.i("RakeCore onCompleted");
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                Logger.e("RakeCore.onError", t);
-            }
-
-            @Override
-            public void onNext(String response) {
-                Logger.i(response);
-            }
+        return incompleteWorker.onErrorReturn(t -> {
+            // TODO: onErrorReturn
+            Logger.e("exception occurred in RakeCore", t);
+            return null;
         });
     }
 
-    private void subscribe(Scheduler scheduler, Observer<String> observer) {
-        if (null != returnedSubscription) returnedSubscription.unsubscribe();
+    private Subscription subscribe(Subscription subscription, Observable<String> worker,
+                                   Scheduler scheduler, Observer<String> observer) {
+        if (null != subscription) subscription.unsubscribe();
 
-        returnedSubscription = returned
+        return worker
                 .subscribeOn((null == scheduler) ? Schedulers.io() : scheduler)
                 .subscribe(observer);
-    }
-
-    static public RakeCore getInstance(RakeDao dao, RakeHttpClient client, RakeUserConfig config) {
-        if (null == instance) instance = new RakeCore(dao, client, config);
-
-        return instance;
     }
 
     public void track(JSONObject json) {
@@ -108,9 +120,9 @@ public class RakeCore {
 
     /* the fields, methods below are used only for testing */
     public void subscribeOnTest(Observer<String> observer) {
-        subscribe(AndroidSchedulers.mainThread(), observer);
+        subscribe(this.subscription, this.worker,
+                AndroidSchedulers.mainThread(), observer);
     }
 
     public int getLogCount() { return dao.getCount(); }
-    public int clearLog() { return dao.clear().size(); }
 }

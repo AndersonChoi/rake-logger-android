@@ -1,4 +1,4 @@
-package rxjava;
+package library.test.rxjava;
 
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;

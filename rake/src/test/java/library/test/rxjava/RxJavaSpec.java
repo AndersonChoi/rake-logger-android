@@ -1,4 +1,4 @@
-package rxjava;
+package library.test.rxjava;
 
 import com.skp.di.rake.client.api.Rake;
 import com.skp.di.rake.client.api.RakeFactory;

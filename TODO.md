@@ -1,32 +1,51 @@
-### Day 9
+### Day 11
 
-- ~~RakeCore 에서 filter flush if null~~
-- onErrorReturn 더 정교히
-- ~~subscribe 정책 세울 것.~~
-- ~~RakeCore.getInstance 에서 inject 할 것인지 정하기~~
-
-- onStop, onResume 을 zip 해서 타이머를 돌려야한다.
-- ~~별도의 스레드로 동작해야 한다. subscribeOn, observeOn~~
-- ~~스케쥴러를 설정할 수 있어야 한다. -> Timer Observable 로~~
-- ~~RakeUserConfig 내에서 provideFlushInterval, maxCount~~
+- HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
 
 - 셔틀과 같이 쓰여야 한다.
 - CompressField
-- ~~Formatter 분리~~ -> RakeProtocol. 비즈니스 로직은 Rake 에
-- RakeCore.returned 만들때 dev면 timer 제거하고, 즉시 flush
-- Token, `Dev` 모드일 경우 바로 플러시 해야한다. -> `RakeCore.returned` 를 build 옵션 주듯
+- SuperProperty -> Rake 책임.
 
 ### Next
 
+- onStop, onResume 을 zip 해서 타이머를 돌려야한다.
+- onErrorReturn 더 정교히
 
-- HTTPClient -> HTTPUrlConnection 으로 변경하려면 TestClient 를 변경해야.
-- HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
+- DAOSqlite 구현
+
+#### TBD
 
 - Flush Interval per Config
 > Rake Instance 마다, flushInterval 을 다르게 할지는 좀 더 생각해볼 문제.
 
-- DAOSqlite 구현
-- DAO multithread 고려 -> Observable subscribeOn 내에서 일어나면, synchronization 필요 X
+- HTTPClient -> HTTPUrlConnection 으로 변경하려면 TestClient 를 변경해야.
+- HTTPUrlConnection 대신 Retrofit 사용
+> 오버헤드가 있지만, 안드로이드 버전따라 어떤 라이브러리를 사용해야 할지 자동으로 결정.
+> http://helloworld.naver.com/helloworld/377316 참조
+
+- worker 내의 Http, Dao 접근 Future 로
+
+### Day 10
+
+- ~~RakeCore 테스팅하기가 불편하다. RakeHttpClient 주입하기가 어려움~~ -> 싱글턴 패턴 제거
+> 테스팅 하려면 어쨌든 주입해야 한다. 주입하는 방법은 생성자, Setter 두가지 밖에 없다.
+싱글턴의 문제는 생성자로 주입한 것을 나중에 갈아치우기 어렵다는 것.
+
+- ~~RakeCore.returned 만들때 dev면 timer 제거하고, 즉시 flush~~
+- ~~Token, `Dev` 모드일 경우 바로 플러시 해야한다. -> `RakeCore.returned` 를 build 옵션 주듯~~
+
+- ~~Formatter 분리~~ -> 비즈니스 로직은 RakeProtocol 에
+
+### Day 9
+
+- ~~RakeCore 에서 filter flush if null~~
+- ~~subscribe 정책 세울 것.~~
+- ~~RakeCore.getInstance 에서 inject 할 것인지 정하기~~
+
+- ~~별도의 스레드로 동작해야 한다. subscribeOn, observeOn~~
+- ~~DAO multithread 고려 -> Observable subscribeOn 내에서 일어나면, synchronization 필요 X~~
+- ~~스케쥴러를 설정할 수 있어야 한다. -> Timer Observable 로~~
+- ~~RakeUserConfig 내에서 provideFlushInterval, maxCount~~
 
 ### Day 8
 

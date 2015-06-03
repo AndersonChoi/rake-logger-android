@@ -31,8 +31,7 @@ public class BuildSpec {
 
     @Test
     public void testRakeVersionShouldStartWith() {
-        /* android_\d.\d.\d */
-
+        /* FORMAT: android_\d.\d.\d (e.g android_0.4.0) */
         assertTrue(RakeMetaConfig.RAKE_CLIENT_VERSION.startsWith("android_"));
     }
 }

@@ -29,7 +29,7 @@ public class RakeImpl implements Rake {
         if (null == shuttle) return;
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
 
-        // TODO: Biz Loic
+        // TODO: Biz Logic, Fill SystemInformation
         core.track(shuttle);
     }
 

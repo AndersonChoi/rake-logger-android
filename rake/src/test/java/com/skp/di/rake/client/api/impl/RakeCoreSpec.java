@@ -4,10 +4,8 @@ package com.skp.di.rake.client.api.impl;
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.mock.MockRakeHttpClient;
-import com.skp.di.rake.client.mock.SampleRakeConfig1;
-import com.skp.di.rake.client.mock.SampleRakeConfig2;
-import com.skp.di.rake.client.network.RakeHttpClient;
-import com.skp.di.rake.client.persistent.RakeDao;
+import com.skp.di.rake.client.mock.SampleDevConfig;
+import com.skp.di.rake.client.mock.SampleLiveConfig;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
 
 import org.json.JSONException;
@@ -20,7 +18,6 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,13 +33,16 @@ import static org.mockito.Mockito.verify;
 @Config(manifest=Config.NONE)
 public class RakeCoreSpec {
 
-    RakeUserConfig config = new SampleRakeConfig1();
-    RakeCore core = RakeCore.getInstance(
-            new RakeDaoMemory(), new MockRakeHttpClient(), config);
+    RakeCore liveCore;
+    Observer<String> liveObserver;
+    RakeUserConfig liveConfig = new SampleLiveConfig();
 
-    int count = config.getMaxLogTrackCount();
+    RakeCore devCore;
+    Observer<String> devObserver;
+    RakeUserConfig devConfig  = new SampleDevConfig();
+
+    int count = liveConfig.getMaxLogTrackCount();
     JSONObject log;
-    Observer<String> testObserver;
 
     @Before
     public void setUp() throws JSONException {
@@ -51,54 +51,59 @@ public class RakeCoreSpec {
         log = new JSONObject();
         log.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
 
-        core.clearLog(); /* important, since core is singleton it can't be re-created */
-        testObserver = mock(Observer.class);
-        core.subscribeOnTest(testObserver);
-    }
+        devCore  = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(), devConfig);
+        devObserver = mock(Observer.class);
+        devCore.subscribeOnTest(devObserver);
 
-    @Test
-    public void testRakeCoreSingleton() {
-        RakeCore core1 = RakeCore.getInstance(null, null, config);
-        RakeCore core2 = RakeCore.getInstance(null, null, new SampleRakeConfig2());
-
-        assertTrue(core1 == core2);
+        liveCore = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(), liveConfig);
+        liveObserver = mock(Observer.class);
+        liveCore.subscribeOnTest(liveObserver);
     }
 
     @Test
     public void testTrackShouldIncreaseLogCount() throws InterruptedException {
-        for (int i = 0; i < count - 1; i++) core.track(log);
+        for (int i = 0; i < count - 1; i++) liveCore.track(log);
 
-        assertEquals(count - 1, core.getLogCount());
+        assertEquals(count - 1, liveCore.getLogCount());
     }
 
     @Test
     public void testFlush() {
-        core.track(log);
-        assertEquals(1, core.getLogCount());
+        liveCore.track(log);
+        assertEquals(1, liveCore.getLogCount());
 
-        core.flush();
-        assertEquals(0, core.getLogCount());
+        liveCore.flush();
+        assertEquals(0, liveCore.getLogCount());
 
-        verify(testObserver, times(1)).onNext(any());
-        verify(testObserver, never()).onError(any());
+        verify(liveObserver, times(1)).onNext(any());
+        verify(liveObserver, never()).onError(any());
     }
 
     @Test
     public void testAutoFlush() {
-        for (int i = 0; i < count; i++) core.track(log);
+        for (int i = 0; i < count; i++) liveCore.track(log);
 
-        assertEquals(0, core.getLogCount());
-        verify(testObserver, times(1)).onNext(any());
-        verify(testObserver, never()).onError(any());
+        assertEquals(0, liveCore.getLogCount());
+        verify(liveObserver, times(1)).onNext(any());
+        verify(liveObserver, never()).onError(any());
     }
 
     @Test
     public void testShouldNotFlushWhenEmpty() {
-        assertEquals(0, core.getLogCount());
+        assertEquals(0, liveCore.getLogCount());
 
-        core.flush();
+        liveCore.flush();
 
-        verify(testObserver, never()).onNext(any());
-        verify(testObserver, never()).onError(any());
+        verify(liveObserver, never()).onNext(any());
+        verify(liveObserver, never()).onError(any());
+    }
+
+    @Test
+    public void testCoreWithDeConfigShouldFlushWhenTrackCalled() {
+        assertEquals(0, devCore.getLogCount());
+
+        devCore.track(log);
+
+        verify(devObserver, times(1)).onNext(any());
     }
 }

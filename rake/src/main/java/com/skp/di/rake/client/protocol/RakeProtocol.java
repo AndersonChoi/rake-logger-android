@@ -6,8 +6,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import rx.exceptions.OnErrorThrowable;
 
 public class RakeProtocol {
     /* Ref: http://wiki.skplanet.com/display/DIT/Rake+API+Spec */
@@ -20,23 +23,26 @@ public class RakeProtocol {
     static public final int ERROR_CODE_INTERNAL_SERVER_ERROR     = 50001;
 
     static public String buildRakeRequestBody(List<JSONObject> tracked) {
-        Iterator<JSONObject> i = tracked.iterator();
-        JSONArray dataField = new JSONArray();
-
-        while(i.hasNext()) {
-            JSONObject log = i.next();
-            dataField.put(log);
-        }
-
-        JSONObject flushed = new JSONObject();
+        JSONObject body = null;
 
         try {
-            flushed.put("data", dataField);
+            body = buildProtocolBody(tracked);
         } catch (JSONException e) {
             Logger.e("Can't build RakeRequestBody", e);
+            throw OnErrorThrowable.from(e);
         }
 
-        String body = flushed.toString();
+        return body.toString();
+    }
+
+    static public String buildRakeRequestBody(JSONObject log) {
+        List<JSONObject> tracked = Arrays.asList(log);
+        return buildRakeRequestBody(tracked);
+    }
+
+    static private JSONObject buildProtocolBody(List<JSONObject> tracked) throws JSONException {
+        JSONObject body = new JSONObject();
+        body.put("data", tracked);
 
         return body;
     }

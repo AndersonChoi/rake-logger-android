@@ -12,6 +12,7 @@ import java.util.HashMap;
 public class RakeFactory {
 
     static private HashMap<RakeUserConfig, Rake> loggerMap;
+    static private RakeCore core;
 
     static {
         loggerMap = new HashMap<RakeUserConfig, Rake>();
@@ -19,17 +20,18 @@ public class RakeFactory {
     }
 
     static public Rake getLogger(RakeUserConfig config) {
-
         Rake logger;
-        RakeDao dao           = new RakeDaoMemory();
-        RakeHttpClient client = new RakeHttpClient();
-        RakeCore core         = RakeCore.getInstance(dao, client, config);
+
+        // TODO remove config: 추후에 core per rake instance 가 될 수 있으므로 TBD
+        if (null == core) {
+            RakeDao dao           = new RakeDaoMemory();
+            RakeHttpClient client = new RakeHttpClient();
+            core = new RakeCore(dao, client, config);
+        }
 
         if (loggerMap.containsKey(config)) {
             logger = loggerMap.get(config);
         } else {
-            /// TODO remove config
-            // logger = new RakeImplWithScheduler(config, RakeCore.getInstance());
             logger = new RakeImpl(config, core);
             loggerMap.put(config, logger);
         }
