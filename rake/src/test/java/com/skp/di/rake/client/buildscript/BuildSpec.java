@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
 public class BuildSpec {
 
     @Test
-    public void testLambda() {
+    public void testRetroLambda() {
         List<String> arr = new ArrayList<>();
         arr.add("abc");
         arr.add("def");

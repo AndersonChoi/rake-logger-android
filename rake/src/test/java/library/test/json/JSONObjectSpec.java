@@ -1,6 +1,7 @@
 package library.test.json;
 
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -22,5 +23,15 @@ public class JSONObjectSpec {
       json.put("key1", JSONObject.NULL);
       assertEquals(JSONObject.NULL, json.get("key1"));
       assertNotNull(json.get("key1"));
+   }
+
+   @Test
+   public void testPutJSONArray() throws JSONException {
+      // TODO: sentinel_meta 중 encryption 필드가 array 인데, array 를
+      // json object 로 뽑아서 다시 넣어도 array 가 되는지.
+      // 이는 sentinel meta_extract 메서드 구현을 위함
+
+
+
    }
 }

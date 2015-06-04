@@ -3,8 +3,13 @@
 - HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
 
 - 셔틀과 같이 쓰여야 한다.
-- CompressField
+- ~~Sentinel Meta 를 뽑아서 depth 를 한단계 올려야 한다.~~
+- ~~Properties~~ 에 기존 값들을 넣어야 한다.
+
+
 - SuperProperty -> Rake 책임.
+- SystemInformation
+- CompressField
 
 ### Next
 
@@ -12,6 +17,10 @@
 - onErrorReturn 더 정교히
 
 - DAOSqlite 구현
+
+- lombok
+
+- track 자체를 스레드에서 돌리면?
 
 #### TBD
 
@@ -215,7 +224,7 @@
       "language_code":"KR",
       "rake_lib_version":"r0.5.0_c0.3.16",
       "os_name":"Android",
-      "token":"17d7c63735d1d1ec81a97e4c44d47acc8420ed15",
+      "token":"",
       "manufacturer":"samsung",
       "rake_lib":"android",
       "action":"action4",

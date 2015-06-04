@@ -111,7 +111,7 @@ public class RakeCore {
     }
 
     public void track(JSONObject json) {
-        trackable.onNext(json);
+        if (null != json) trackable.onNext(json);
     }
 
     public void flush() {

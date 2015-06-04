@@ -6,6 +6,7 @@ import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.protocol.RakeProtocol;
+import com.skp.di.rake.client.protocol.ShuttleProtocol;
 import com.skp.di.rake.client.utils.Logger;
 
 import org.json.JSONArray;
@@ -29,9 +30,28 @@ public class RakeImpl implements Rake {
         if (null == shuttle) return;
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
 
-        // TODO: Biz Logic, Fill SystemInformation
-        core.track(shuttle);
+        // TODO getTIme from here
+        JSONObject willBeTracked = null;
+
+        try {
+            willBeTracked = ShuttleProtocol.extractSentinelMeta(shuttle);
+            JSONObject properties = ShuttleProtocol.extractProperties(shuttle);
+
+            // TODO fill SystemInformation
+//            JSONObject systemInfo = SystemInfomation.getDefaultProperties();
+//            ShuttleProtocol.copyProperties(systemInfo, properties);
+
+            willBeTracked.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
+
+        } catch (JSONException e) {
+            Logger.e("Can't build willBeTracked", e);
+        } catch (Exception e) {
+            Logger.e("Can't build willBeTracked", e);
+        }
+
+        if (null != willBeTracked) core.track(willBeTracked);
     }
+
 
     @Override
     public void flush() {
