@@ -86,11 +86,10 @@ public class RakeCore {
                 }).filter(count -> count == config.getMaxLogTrackCount())
                 .mergeWith(timer.mergeWith(flushable))
                 .map(flushCommanded -> {
-                    if (0 == dao.getCount()) return null;
-
                     List<JSONObject> tracked = dao.clear();
                     String requestBody = RakeProtocol.buildRakeRequestBody(tracked);
-                    return client.send(requestBody); /* return response */
+                    if (null == requestBody) return null;
+                    else                     return client.send(requestBody); /* return response */
                 }).filter(responseBody -> null != responseBody);
         }
 

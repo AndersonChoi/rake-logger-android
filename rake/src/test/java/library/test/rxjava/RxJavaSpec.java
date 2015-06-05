@@ -241,20 +241,4 @@ public class RxJavaSpec {
                 });
     }
 
-    @Ignore
-    public void defineApiSpec() {
-        Rake rake = RakeFactory.getLogger(new SampleRakeConfig1());
-
-        /**
-        // RakeUserConfig 별로 Observable 하나씩 생성
-        Observable<String> o = Observable
-                .interval(60, TimeUnit.SECONDS)
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(Schedulers.computation())
-                .map(x -> { return new RakeHttpClient().send(requestBody); })
-                .filter(responseBody -> null != responseBody);
-
-        Subscription s = o.subscribe(responseBody -> Logger.e(responseBody));
-        **/
-    }
 }

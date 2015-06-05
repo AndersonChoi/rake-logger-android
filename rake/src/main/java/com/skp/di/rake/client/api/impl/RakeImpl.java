@@ -1,5 +1,6 @@
 package com.skp.di.rake.client.api.impl;
 
+import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.api.Rake;
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
@@ -19,10 +20,12 @@ import java.util.List;
 public class RakeImpl implements Rake {
     private RakeCore core;
     private RakeUserConfig config;
+    private SystemInformation sysInfo;
 
-    public RakeImpl(RakeUserConfig config, RakeCore core) {
+    public RakeImpl(RakeUserConfig config, RakeCore core, SystemInformation info) {
         this.config = config;
         this.core = core;
+        this.sysInfo = info;
     }
 
     @Override
@@ -38,10 +41,12 @@ public class RakeImpl implements Rake {
             JSONObject properties = ShuttleProtocol.extractProperties(shuttle);
 
             // TODO fill SystemInformation
-//            JSONObject systemInfo = SystemInfomation.getDefaultProperties();
-//            ShuttleProtocol.copyProperties(systemInfo, properties);
+             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
+             copyProperties(defaultProperties, properties);
 
             willBeTracked.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
+
+            // TODO record: token, base_time, local_time
 
         } catch (JSONException e) {
             Logger.e("Can't build willBeTracked", e);
@@ -50,6 +55,16 @@ public class RakeImpl implements Rake {
         }
 
         if (null != willBeTracked) core.track(willBeTracked);
+    }
+
+    private void copyProperties(JSONObject source, JSONObject target) throws JSONException {
+        Iterator<String> iter = source.keys();
+
+        while(iter.hasNext()) {
+            String key = iter.next();
+
+            target.put(key, source.get(key));
+        }
     }
 
 

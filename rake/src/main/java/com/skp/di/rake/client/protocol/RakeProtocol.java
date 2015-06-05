@@ -22,7 +22,13 @@ public class RakeProtocol {
     static public final int ERROR_CODE_INVALID_END_POINT         = 40401;
     static public final int ERROR_CODE_INTERNAL_SERVER_ERROR     = 50001;
 
+    static public final String FIELD_NAME_DATA = "data";
+    static public final String FIELD_NAME_COMPRESS = "compress";
+    static public final String FIELD_VALUE_COMPRESS = "plain";
+
     static public String buildRakeRequestBody(List<JSONObject> tracked) {
+        if (0 == tracked.size()) return null;
+
         JSONObject body = null;
 
         try {
@@ -42,7 +48,8 @@ public class RakeProtocol {
 
     static private JSONObject buildProtocolBody(List<JSONObject> tracked) throws JSONException {
         JSONObject body = new JSONObject();
-        body.put("data", tracked);
+        body.put(FIELD_NAME_DATA, new JSONArray(tracked));
+        body.put(FIELD_NAME_COMPRESS, FIELD_VALUE_COMPRESS);
 
         return body;
     }

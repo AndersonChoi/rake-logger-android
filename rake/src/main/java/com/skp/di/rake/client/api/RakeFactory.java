@@ -1,5 +1,8 @@
 package com.skp.di.rake.client.api;
 
+import android.content.Context;
+
+import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.api.impl.RakeCore;
 import com.skp.di.rake.client.api.impl.RakeImpl;
 import com.skp.di.rake.client.network.RakeHttpClient;
@@ -19,7 +22,7 @@ public class RakeFactory {
         Collections.synchronizedMap(loggerMap);
     }
 
-    static public Rake getLogger(RakeUserConfig config) {
+    static public Rake getLogger(RakeUserConfig config, Context context) {
         Rake logger;
 
         // TODO remove config: 추후에 core per rake instance 가 될 수 있으므로 TBD
@@ -32,7 +35,7 @@ public class RakeFactory {
         if (loggerMap.containsKey(config)) {
             logger = loggerMap.get(config);
         } else {
-            logger = new RakeImpl(config, core);
+            logger = new RakeImpl(config, core, SystemInformation.getInstance(context));
             loggerMap.put(config, logger);
         }
 

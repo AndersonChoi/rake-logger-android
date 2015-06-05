@@ -1,17 +1,18 @@
-### Day 11
+### Day 12
 
-- HTTPS 로 보내야한다. HttpUrlConnection 으로 변경 후 이 작업 진행할 것
+- Base64 encoding
+- UrnEncoding Entity
+- HTTPS 로 보내야한다.
 
-- 셔틀과 같이 쓰여야 한다.
-- ~~Sentinel Meta 를 뽑아서 depth 를 한단계 올려야 한다.~~
-- ~~Properties~~ 에 기존 값들을 넣어야 한다.
-
+- ~~JSONArray 로 보내야 한다.~~
+- ~~CompressField~~
 
 - SuperProperty -> Rake 책임.
-- SystemInformation
-- CompressField
 
 ### Next
+
+- HttpUrlConnection 또는 라이브러리
+- RakeUserConfig 애 `providePrintLog`
 
 - onStop, onResume 을 zip 해서 타이머를 돌려야한다.
 - onErrorReturn 더 정교히
@@ -20,7 +21,14 @@
 
 - lombok
 
+- defaultProperties 에서 네트워크 타입이 준 실시간 즉, Rake 인슽
+처
 - track 자체를 스레드에서 돌리면?
+- Shuttle Protocol.static 함수들을 다 rake private 로 변경하면?
+- RakeImpl 쓸모없음. 차라리 ShuttleDelivery 이렇게 해도 될 듯.
+- CrashLogger 는 Delivery 를 상속받아, Flush없이 바로 Tracked 해도 될것 같고.
+
+- maven AAR
 
 #### TBD
 
@@ -33,6 +41,14 @@
 > http://helloworld.naver.com/helloworld/377316 참조
 
 - worker 내의 Http, Dao 접근 Future 로
+
+### Day 11
+
+- ~~셔틀과 같이 쓰여야 한다.~~
+- ~~Sentinel Meta 를 뽑아서 depth 를 한단계 올려야 한다.~~
+- ~~Properties~~ 에 기존 값들을 넣어야 한다.
+- ~~SystemInformation~~
+
 
 ### Day 10
 
@@ -138,134 +154,3 @@
 - ~~RakeBasicLogger 가 RakeLogDaoSQLite 를 알고있다.~~
 
 
-```javascript
-// Shuttle String
-{
-   "log_version":"15.04.09:1.5.26:60",
-   "network_type":"",
-   "app_version":"",
-   "screen_width":"",
-   "device_id":"",
-   "sentinel_meta":{
-      "_$fieldOrder":{
-         "log_version":20,
-         "network_type":12,
-         "app_version":16,
-         "screen_width":9,
-         "device_id":3,
-         "resolution":8,
-         "recv_host":15,
-         "ip":14,
-         "os_version":7,
-         "recv_time":2,
-         "local_time":1,
-         "language_code":13,
-         "device_model":4,
-         "rake_lib_version":18,
-         "os_name":6,
-         "token":19,
-         "rake_lib":17,
-         "manufacturer":5,
-         "action":21,
-         "_$body":22,
-         "base_time":0,
-         "carrier_name":11,
-         "screen_height":10
-      },
-      "_$schemaId":"5538a7f3e4b0e5b461fc7737",
-      "_$projectId":"projectId",
-      "_$encryptionFields":[
-         "field1",
-         "field3"
-      ]
-   },
-   "resolution":"",
-   "recv_host":"",
-   "ip":"",
-   "os_version":"",
-   "recv_time":"",
-   "local_time":"",
-   "language_code":"",
-   "device_model":"",
-   "rake_lib_version":"",
-   "os_name":"",
-   "token":"",
-   "rake_lib":"",
-   "manufacturer":"",
-   "action":"action4",
-   "_$body":{
-      "field1":"field1 value",
-      "field4":"field4 value",
-      "field3":"field3 value"
-   },
-   "base_time":"",
-   "carrier_name":"",
-   "screen_height":""
-}
-```
-
-```javascript
-// flushed string
-{
-   "_$schemaId":"5538a7f3e4b0e5b461fc7737",
-   "properties":{
-      "network_type":"NOT WIFI",
-      "log_version":"15.04.09:1.5.26:60",
-      "screen_width":2560,
-      "app_version":"1.0_20150601_204916",
-      "device_id":"a8cac7a1ca580768",
-      "resolution":"1440*2560",
-      "recv_host":"",
-      "recv_time":"",
-      "os_version":"4.4.4",
-      "ip":"",
-      "local_time":"20150601204818702",
-      "device_model":"SM-N910S",
-      "language_code":"KR",
-      "rake_lib_version":"r0.5.0_c0.3.16",
-      "os_name":"Android",
-      "token":"",
-      "manufacturer":"samsung",
-      "rake_lib":"android",
-      "action":"action4",
-      "_$body":{
-         "field1":"field1 value",
-         "field4":"field4 value",
-         "field3":"field3 value"
-      },
-      "base_time":"20150601204818702",
-      "carrier_name":"SKTelecom",
-      "screen_height":1440
-   },
-   "_$encryptionFields":[
-      "field1",
-      "field3"
-   ],
-   "_$fieldOrder":{
-      "log_version":20,
-      "network_type":12,
-      "app_version":16,
-      "screen_width":9,
-      "device_id":3,
-      "resolution":8,
-      "recv_host":15,
-      "ip":14,
-      "os_version":7,
-      "recv_time":2,
-      "local_time":1,
-      "language_code":13,
-      "device_model":4,
-      "rake_lib_version":18,
-      "os_name":6,
-      "token":19,
-      "rake_lib":17,
-      "manufacturer":5,
-      "action":21,
-      "_$body":22,
-      "base_time":0,
-      "carrier_name":11,
-      "screen_height":10
-   },
-   "_$projectId":"projectId"
-}
-```
