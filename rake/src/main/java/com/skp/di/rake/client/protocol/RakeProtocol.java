@@ -1,16 +1,22 @@
 package com.skp.di.rake.client.protocol;
 
-import com.skp.di.rake.client.utils.Logger;
+import android.util.Base64;
 
+import com.skp.di.rake.client.utils.StringUtils;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-
-import rx.exceptions.OnErrorThrowable;
 
 public class RakeProtocol {
     /* Ref: http://wiki.skplanet.com/display/DIT/Rake+API+Spec */
@@ -26,32 +32,38 @@ public class RakeProtocol {
     static public final String FIELD_NAME_COMPRESS = "compress";
     static public final String FIELD_VALUE_COMPRESS = "plain";
 
-    static public String buildRakeRequestBody(List<JSONObject> tracked) {
-        if (0 == tracked.size()) return null;
+    static public UrlEncodedFormEntity buildRequestEntity(List<JSONObject> tracked) throws JSONException, UnsupportedEncodingException {
+        if (null == tracked || 0 == tracked.size())
+            throw new JSONException("`tracked` is null.");
 
-        JSONObject body = null;
-
-        try {
-            body = buildProtocolBody(tracked);
-        } catch (JSONException e) {
-            Logger.e("Can't build RakeRequestBody", e);
-            throw OnErrorThrowable.from(e);
-        }
-
-        return body.toString();
+        // TODO: return buildJsonEntity(tracked);
+        return buildUrlEncodedEntity(tracked);
     }
 
-    static public String buildRakeRequestBody(JSONObject log) {
+    static public HttpEntity buildRequestEntity(JSONObject log) throws JSONException, UnsupportedEncodingException {
         List<JSONObject> tracked = Arrays.asList(log);
-        return buildRakeRequestBody(tracked);
+        return buildRequestEntity(tracked);
     }
 
-    static private JSONObject buildProtocolBody(List<JSONObject> tracked) throws JSONException {
+    static public UrlEncodedFormEntity buildUrlEncodedEntity(List<JSONObject> tracked) throws JSONException, UnsupportedEncodingException {
+        List<NameValuePair> pairs = new ArrayList<>(2);
+
+        String FIELD_VALUE_DATA = StringUtils.encodeBase64(new JSONArray(tracked).toString());
+
+        pairs.add(new BasicNameValuePair(
+                RakeProtocol.FIELD_NAME_COMPRESS, RakeProtocol.FIELD_VALUE_COMPRESS));
+        pairs.add(new BasicNameValuePair(
+                RakeProtocol.FIELD_NAME_DATA, FIELD_VALUE_DATA));
+
+        return new UrlEncodedFormEntity(pairs);
+    }
+
+    static public StringEntity buildJsonEntity(List<JSONObject> tracked) throws JSONException, UnsupportedEncodingException {
         JSONObject body = new JSONObject();
         body.put(FIELD_NAME_DATA, new JSONArray(tracked));
         body.put(FIELD_NAME_COMPRESS, FIELD_VALUE_COMPRESS);
 
-        return body;
+        return new StringEntity(body.toString());
     }
 
 

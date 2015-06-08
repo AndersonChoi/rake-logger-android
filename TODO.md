@@ -1,7 +1,8 @@
 ### Day 12
 
-- Base64 encoding
-- UrnEncoding Entity
+- ~~Base64 encoding~~
+- URLEncoding Entity
+
 - HTTPS 로 보내야한다.
 
 - ~~JSONArray 로 보내야 한다.~~

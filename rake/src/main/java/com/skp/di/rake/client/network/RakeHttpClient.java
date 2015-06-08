@@ -13,34 +13,37 @@ import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
 import com.skp.di.rake.client.utils.Logger;
 import com.skp.di.rake.client.utils.StringUtils;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Iterator;
 import java.util.List;
 
 public class RakeHttpClient {
     private String endPoint = RakeMetaConfig.END_POINT;
 
-    public String send(String body) {
+    public String send(List<JSONObject> tracked) {
+
+        if (null == tracked || 0 == tracked.size()) return null;
+
         String responseBody = null;
 
         try {
-            HttpResponse res = executePost(body);
+            HttpResponse res = executePost(tracked);
             responseBody = convertHttpResponseToString(res);
 
             int statusCode = res.getStatusLine().getStatusCode();
@@ -48,6 +51,8 @@ public class RakeHttpClient {
 
         } catch(UnsupportedEncodingException e) {
             Logger.e("Cant' build StringEntity using body", e);
+        } catch(JSONException e) {
+            Logger.e("Can't build RakeRequestBody", e);
         } catch(ClientProtocolException e) {
             Logger.e("Can't send message to server", e);
         } catch (IOException e) {
@@ -134,12 +139,10 @@ public class RakeHttpClient {
         }
     }
 
-    protected HttpResponse executePost(String body)
-            throws UnsupportedEncodingException, IOException {
-        HttpClient   client = createHttpClient();
-        StringEntity se     = createEntity(body);
-        HttpPost     post   = createHttpPost(se);
+    protected HttpResponse executePost(List<JSONObject> tracked) throws IOException, JSONException {
 
+        HttpClient   client = createHttpClient();
+        HttpPost     post   = createHttpPost(RakeProtocol.buildRequestEntity(tracked));
         HttpResponse response = client.execute(post);
 
         return response;
@@ -168,16 +171,19 @@ public class RakeHttpClient {
         return client;
     }
 
-    private HttpPost createHttpPost(StringEntity se) {
-        HttpPost post = new HttpPost(endPoint);
-        post.setEntity(se);
+    private HttpPost createHttpPost(StringEntity entity) {
+        HttpPost post = createHttpPost(entity);
+
         post.setHeader("Content-Type", "application/json");
         post.setHeader("Accept", "application/json");
 
         return post;
     }
 
-    private StringEntity createEntity(String body) throws UnsupportedEncodingException {
-        return new StringEntity(body);
+    private HttpPost createHttpPost(UrlEncodedFormEntity entity) {
+        HttpPost post = new HttpPost(endPoint);
+        post.setEntity(entity);
+
+        return post;
     }
 }

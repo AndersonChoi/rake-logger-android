@@ -33,17 +33,11 @@ public class RakeImpl implements Rake {
         if (null == shuttle) return;
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
 
-        // TODO getTIme from here
         JSONObject trackableShuttle = null;
 
         try {
-
-            // TODO fill SystemInformation
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackableShuttle = ShuttleProtocol.getTrackableShuttle(shuttle, defaultProperties);
-
-            // TODO record: token, base_time, local_time
-
         } catch (JSONException e) {
             Logger.e("Can't build willBeTracked", e);
         } catch (Exception e) {

@@ -8,6 +8,7 @@ import com.skp.di.rake.client.utils.Logger;
 
 import org.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -75,8 +76,7 @@ public class RakeCore {
         if (RakeUserConfig.Mode.DEV == config.getRunningMode()) {
             incompleteWorker = trackable
                     .map(json -> {
-                        String requestBody = RakeProtocol.buildRakeRequestBody(json);
-                        return client.send(requestBody);
+                        return client.send(Arrays.asList(json));
                     });
         } else { /* Mode.Live */
              incompleteWorker = trackable
@@ -87,9 +87,7 @@ public class RakeCore {
                 .mergeWith(timer.mergeWith(flushable))
                 .map(flushCommanded -> {
                     List<JSONObject> tracked = dao.clear();
-                    String requestBody = RakeProtocol.buildRakeRequestBody(tracked);
-                    if (null == requestBody) return null;
-                    else                     return client.send(requestBody); /* return response */
+                    return client.send(tracked); /* return response. it might be null */
                 }).filter(responseBody -> null != responseBody);
         }
 

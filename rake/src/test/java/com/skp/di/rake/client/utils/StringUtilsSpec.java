@@ -6,6 +6,8 @@ import com.skp.di.rake.client.utils.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -13,7 +15,8 @@ import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(JUnit4.class)
+@RunWith(RobolectricTestRunner.class)
+@Config(manifest=Config.NONE)
 public class StringUtilsSpec {
 
     @Test
@@ -52,5 +55,15 @@ public class StringUtilsSpec {
 
         String converted = StringUtils.toString(is);
         assertEquals("Hello World", converted);
+    }
+
+    @Test
+    public void testEncodeBase64() {
+        String origin = "[Hello World! & Java World! ++ Scala World!]";
+
+        String encoded = StringUtils.encodeBase64(origin);
+        String decoded = StringUtils.decodeBase64(encoded);
+
+        assertEquals(origin, decoded);
     }
 }

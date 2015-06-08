@@ -1,5 +1,7 @@
 package com.skp.di.rake.client.utils;
 
+import android.util.Base64;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -7,6 +9,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class StringUtils {
+
+    static public String encodeBase64(String str) {
+        return Base64.encodeToString(str.getBytes(), Base64.DEFAULT);
+    }
+
+    static public String decodeBase64(String encoded) {
+        return new String(Base64.decode(encoded.getBytes(), Base64.DEFAULT));
+    }
 
     public static String join(String[] arr, String sep) {
         if (null == arr) return null;
