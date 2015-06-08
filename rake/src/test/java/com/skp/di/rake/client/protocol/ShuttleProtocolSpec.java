@@ -1,5 +1,7 @@
 package com.skp.di.rake.client.protocol;
 
+import com.skp.di.rake.client.mock.MockSystemInformation;
+import com.skp.di.rake.client.mock.SampleDevConfig;
 import com.skp.di.rake.client.utils.Logger;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
 
@@ -13,7 +15,9 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,6 +44,43 @@ public class ShuttleProtocolSpec {
     }
 
     @Test
+    public void testShuttleProtocolCanReturn_extractedMetaAndProperties() throws JSONException {
+        JSONObject defaultProperties = MockSystemInformation.getDefaultProperties(new SampleDevConfig());
+        JSONObject trackable = ShuttleProtocol.getTrackableShuttle(shuttle.toJSONObject(), defaultProperties);
+
+        assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_SCHEMA_ID));
+        assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_PROJECT_ID));
+        assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS));
+        assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_FIELD_ORDER));
+        assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_PROPERTIES));
+        assertTrue(trackable.getJSONObject(ShuttleProtocol.FIELD_NAME_PROPERTIES)
+                .has(ShuttleProtocol.FIELD_NAME_BODY));
+
+        assertFalse(trackable.has(ShuttleProtocol.FIELD_NAME_SENTINEL_META));
+    }
+
+    @Test
+    public void testTrackableHasValidDefaultProperties() throws JSONException {
+        JSONObject defaultProperties = MockSystemInformation.getDefaultProperties(new SampleDevConfig());
+        JSONObject trackable = ShuttleProtocol.getTrackableShuttle(shuttle.toJSONObject(), defaultProperties);
+
+        JSONObject properties = trackable.getJSONObject(ShuttleProtocol.FIELD_NAME_PROPERTIES);
+
+        List<String> defaultPropertyNames = Arrays.asList(
+                "base_time", "local_time", "recv_time", ShuttleProtocol.FIELD_NAME_BODY,
+                "device_id", "device_model", "os_name", "os_version",
+                "resolution", "screen_width", "screen_height",
+                "app_version", "carrier_name", "network_type", "language_code",
+                "rake_lib", "rake_lib_version", "manufacturer", "ip",
+                "recv_host", "token"
+        );
+
+        for(String key : defaultPropertyNames) {
+            assertTrue(properties.has(key));
+        }
+    }
+
+    @Test
     public void testShuttleHasSentinelMeta() throws JSONException {
         JSONObject sentinel_meta = shuttle.toJSONObject().getJSONObject(ShuttleProtocol.FIELD_NAME_SENTINEL_META);
         JSONArray _$encryptionFields = (JSONArray) sentinel_meta.get(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS);
@@ -47,58 +88,5 @@ public class ShuttleProtocolSpec {
         JSONObject _$fieldOrder = sentinel_meta.getJSONObject(ShuttleProtocol.FIELD_NAME_FIELD_ORDER);
         String _$schemaId = sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_SCHEMA_ID);
     }
-
-    @Test
-    public void testExtractSentinelMeta() throws JSONException {
-
-        JSONObject willBeTracked = ShuttleProtocol.extractSentinelMeta(shuttle.toJSONObject());
-        JSONArray _$encryptionFields = (JSONArray) willBeTracked.get(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS);
-        String _$projectId = willBeTracked.getString(ShuttleProtocol.FIELD_NAME_PROJECT_ID);
-        JSONObject _$fieldOrder = willBeTracked.getJSONObject(ShuttleProtocol.FIELD_NAME_FIELD_ORDER);
-        String _$schemaId = willBeTracked.getString(ShuttleProtocol.FIELD_NAME_SCHEMA_ID);
-
-        JSONObject sentinel_meta = shuttle.toJSONObject().getJSONObject(ShuttleProtocol.FIELD_NAME_SENTINEL_META);
-
-        assertEquals(
-                sentinel_meta.getJSONArray(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS),
-                _$encryptionFields);
-
-        assertEquals(
-                sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_PROJECT_ID),
-                _$projectId);
-
-        assertEquals(
-                sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_SCHEMA_ID),
-                _$schemaId);
-
-        assertEquals(
-                sentinel_meta.getJSONObject(ShuttleProtocol.FIELD_NAME_FIELD_ORDER).toString(),
-                _$fieldOrder.toString());
-    }
-
-    @Test
-    public void testExtractProperties() throws JSONException {
-        JSONObject shuttleJSON = shuttle.toJSONObject();
-        JSONObject properties = ShuttleProtocol.extractProperties(shuttleJSON);
-
-        // properties should contain the same key-values
-        // except`ShuttleProtocol.FIELD_NAME_PROPERTIES`
-
-        Iterator<String> iter = shuttleJSON.keys();
-
-        while(iter.hasNext()) {
-            String key = iter.next();
-
-            if (key.equals(ShuttleProtocol.FIELD_NAME_SENTINEL_META)) {
-                assertFalse(properties.has(key));
-                continue;
-            }
-
-            assertTrue(properties.has(key));
-            assertEquals(shuttleJSON.get(key), properties.get(key));
-        }
-
-    }
-
 }
 

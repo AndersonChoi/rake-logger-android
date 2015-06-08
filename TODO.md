@@ -9,6 +9,11 @@
 
 - SuperProperty -> Rake 책임.
 
+- RakeLogger.getInstance() 를 Double-Check Locking 으로 변경
+- flush, track synchronized
+
+- ~~ShuttleProtocol 정리~~
+
 ### Next
 
 - HttpUrlConnection 또는 라이브러리

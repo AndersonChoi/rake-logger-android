@@ -34,17 +34,13 @@ public class RakeImpl implements Rake {
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
 
         // TODO getTIme from here
-        JSONObject willBeTracked = null;
+        JSONObject trackableShuttle = null;
 
         try {
-            willBeTracked = ShuttleProtocol.extractSentinelMeta(shuttle);
-            JSONObject properties = ShuttleProtocol.extractProperties(shuttle);
 
             // TODO fill SystemInformation
-             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
-             copyProperties(defaultProperties, properties);
-
-            willBeTracked.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
+            JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
+            trackableShuttle = ShuttleProtocol.getTrackableShuttle(shuttle, defaultProperties);
 
             // TODO record: token, base_time, local_time
 
@@ -54,19 +50,8 @@ public class RakeImpl implements Rake {
             Logger.e("Can't build willBeTracked", e);
         }
 
-        if (null != willBeTracked) core.track(willBeTracked);
+        if (null != trackableShuttle) core.track(trackableShuttle);
     }
-
-    private void copyProperties(JSONObject source, JSONObject target) throws JSONException {
-        Iterator<String> iter = source.keys();
-
-        while(iter.hasNext()) {
-            String key = iter.next();
-
-            target.put(key, source.get(key));
-        }
-    }
-
 
     @Override
     public void flush() {

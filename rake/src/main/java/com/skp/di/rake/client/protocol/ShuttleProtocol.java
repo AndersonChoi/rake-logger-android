@@ -17,7 +17,18 @@ public class ShuttleProtocol {
     static public final String FIELD_NAME_SENTINEL_META     = "sentinel_meta";
     static public final String FIELD_NAME_ENCRYPTION_FIELDS = "_$encryptionFields";
 
-    static public JSONObject extractSentinelMeta(JSONObject shuttle) throws JSONException {
+    static public JSONObject getTrackableShuttle(JSONObject shuttle, JSONObject defaultProperties)
+            throws JSONException {
+        JSONObject trackableShuttle = extractSentinelMeta(shuttle);
+        JSONObject userProperties   = extractProperties(shuttle);
+        JSONObject properties = mergeProperties(defaultProperties /* to */, userProperties);
+
+        trackableShuttle.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
+
+        return trackableShuttle;
+    }
+
+    static private JSONObject extractSentinelMeta(JSONObject shuttle) throws JSONException {
         JSONObject willBeTracked = new JSONObject();
 
         // extract `sentinel_meta`
@@ -36,7 +47,7 @@ public class ShuttleProtocol {
         return willBeTracked;
     }
 
-    static public JSONObject extractProperties(JSONObject shuttle) throws JSONException {
+    static private JSONObject extractProperties(JSONObject shuttle) throws JSONException {
 
         JSONObject properties = new JSONObject();
 
@@ -47,6 +58,30 @@ public class ShuttleProtocol {
             if (key.equals(ShuttleProtocol.FIELD_NAME_SENTINEL_META)) continue;
 
             properties.put(key, shuttle.get(key));
+        }
+
+        return properties;
+    }
+
+
+    // write `first` first, then write `second`
+    static private JSONObject mergeProperties(JSONObject first, JSONObject second) throws JSONException {
+        JSONObject properties = new JSONObject();
+
+        /* copy first */
+        Iterator<String> iter = first.keys();
+        while(iter.hasNext()) {
+            String key = iter.next();
+            properties.put(key, first.get(key));
+        }
+
+
+        /* copy second */
+        iter = second.keys();
+
+        while(iter.hasNext()) {
+            String key = iter.next();
+            properties.put(key, second.get(key));
         }
 
         return properties;
