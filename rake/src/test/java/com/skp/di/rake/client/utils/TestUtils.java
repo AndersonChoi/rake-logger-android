@@ -1,7 +1,7 @@
 package com.skp.di.rake.client.utils;
 
-import com.skp.di.rake.client.mock.TestUrlEncodedNetworkConfig;
-import com.skp.di.rake.client.network.RakeNetworkConfig;
+import com.skp.di.rake.client.config.RakeMetaConfig;
+import com.skp.di.rake.client.mock.SampleDevConfig;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -19,19 +19,19 @@ import java.util.List;
 import rx.exceptions.OnErrorThrowable;
 
 public class TestUtils {
-    static private RakeNetworkConfig networkConfig = new TestUrlEncodedNetworkConfig();
+    static private RakeMetaConfig config = new RakeMetaConfig(new SampleDevConfig());
 
     static public HttpClient createHttpClient() {
         HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, networkConfig.getConnectionTimeout());
-        HttpConnectionParams.setSoTimeout(params, networkConfig.getSocketTimeout());
+        HttpConnectionParams.setConnectionTimeout(params, config.getHttpConnectionTimeout());
+        HttpConnectionParams.setSoTimeout(params, config.getHttpSocketTimeout());
         HttpClient client = new DefaultHttpClient(params);
 
         return client;
     }
 
     static public HttpPost createHttpPost(StringEntity se) {
-        HttpPost post = new HttpPost(networkConfig.getEndPoint());
+        HttpPost post = new HttpPost(config.getEndpoint());
         post.setEntity(se);
         post.setHeader("Content-Type", "application/json");
         post.setHeader("Accept", "application/json");

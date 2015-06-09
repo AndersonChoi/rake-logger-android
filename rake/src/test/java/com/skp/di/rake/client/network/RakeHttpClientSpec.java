@@ -1,9 +1,9 @@
 package com.skp.di.rake.client.network;
 
 
+import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.mock.MockRakeHttpClient;
-import com.skp.di.rake.client.mock.TestJsonNetworkConfig;
-import com.skp.di.rake.client.mock.TestUrlEncodedNetworkConfig;
+import com.skp.di.rake.client.mock.SampleDevConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
@@ -61,7 +61,11 @@ public class RakeHttpClientSpec {
 
     @Test
     public void testHttpHeaderWithUrlEncodedContent() throws InterruptedException {
-        RakeHttpClient httpClient  = new RakeHttpClient(new TestUrlEncodedNetworkConfig());
+        RakeMetaConfig metaConfig = new RakeMetaConfig(new SampleDevConfig());
+        metaConfig.setContentType(RakeMetaConfig.ContentType.URL_ENCODED_FORM);
+        metaConfig.setTestEndPoint();
+
+        RakeHttpClient httpClient  = new RakeHttpClient(metaConfig);
         httpClient.send(Arrays.asList(new JSONObject()));
 
         RecordedRequest requested = server.takeRequest();
@@ -72,7 +76,11 @@ public class RakeHttpClientSpec {
 
     @Test
     public void testHttpHeaderWithJsonContent() throws InterruptedException {
-        RakeHttpClient httpClient  = new RakeHttpClient(new TestJsonNetworkConfig());
+        RakeMetaConfig metaConfig = new RakeMetaConfig(new SampleDevConfig());
+        metaConfig.setContentType(RakeMetaConfig.ContentType.JSON);
+        metaConfig.setTestEndPoint();
+
+        RakeHttpClient httpClient  = new RakeHttpClient(metaConfig);
         httpClient.send(Arrays.asList(new JSONObject()));
 
         RecordedRequest requested = server.takeRequest();

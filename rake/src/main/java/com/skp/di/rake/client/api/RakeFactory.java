@@ -5,7 +5,7 @@ import android.content.Context;
 import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.api.impl.RakeCore;
 import com.skp.di.rake.client.api.impl.RakeImpl;
-import com.skp.di.rake.client.network.RakeDefaultNetworkConfig;
+import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
@@ -26,8 +26,9 @@ public class RakeFactory {
 
         // TODO remove config: 추후에 core per rake instance 가 될 수 있으므로 TBD
         if (null == core) {
+
             RakeDao dao           = new RakeDaoMemory();
-            RakeHttpClient client = new RakeHttpClient(new RakeDefaultNetworkConfig());
+            RakeHttpClient client = new RakeHttpClient(new RakeMetaConfig(config));
             core = new RakeCore(dao, client, config);
         }
 

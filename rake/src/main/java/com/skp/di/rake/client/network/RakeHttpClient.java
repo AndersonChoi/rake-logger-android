@@ -1,6 +1,5 @@
 package com.skp.di.rake.client.network;
 
-import com.skp.di.rake.client.api.Rake;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
@@ -20,14 +19,12 @@ import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -43,14 +40,13 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.util.List;
 
 public class RakeHttpClient {
 
-    private RakeNetworkConfig config;
+    RakeMetaConfig config;
 
-    public RakeHttpClient(RakeNetworkConfig config) {
+    public RakeHttpClient(RakeMetaConfig config) {
         this.config = config;
     }
 
@@ -164,15 +160,15 @@ public class RakeHttpClient {
 
         HttpClient   client = null;
 
-        if (config.getEndPoint().startsWith("https"))     client = createHttpsClient();
-        else if (config.getEndPoint().startsWith("http")) client = createHttpClient();
+        if (config.getEndpoint().startsWith("https"))     client = createHttpsClient();
+        else if (config.getEndpoint().startsWith("http")) client = createHttpClient();
         else throw new RakeProtocolBrokenException("Unsupported endpoint protocol");
 
         HttpEntity entity = null;
 
-        if      (config.getContentType() == RakeNetworkConfig.ContentType.JSON)
+        if      (config.getContentType() == RakeMetaConfig.ContentType.JSON)
             entity = RakeProtocol.buildJsonEntity(tracked);
-        else if (config.getContentType() == RakeNetworkConfig.ContentType.URL_ENCODED_FORM)
+        else if (config.getContentType() == RakeMetaConfig.ContentType.URL_ENCODED_FORM)
             entity = RakeProtocol.buildUrlEncodedEntity(tracked);
         else throw new RakeProtocolBrokenException("Unsupported contentType");
 
@@ -226,8 +222,8 @@ public class RakeHttpClient {
 
     private HttpParams createHttpParams() {
         HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, config.getConnectionTimeout());
-        HttpConnectionParams.setSoTimeout(params, config.getSocketTimeout());
+        HttpConnectionParams.setConnectionTimeout(params, config.getHttpConnectionTimeout());
+        HttpConnectionParams.setSoTimeout(params, config.getHttpSocketTimeout());
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
         HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
 
@@ -235,10 +231,10 @@ public class RakeHttpClient {
     }
 
     private HttpPost createHttpPost(HttpEntity entity) {
-        HttpPost post = new HttpPost(config.getEndPoint());
+        HttpPost post = new HttpPost(config.getEndpoint());
         post.setEntity(entity);
 
-        if (config.getContentType() == RakeNetworkConfig.ContentType.JSON) {
+        if (config.getContentType() == RakeMetaConfig.ContentType.JSON) {
             post.setHeader("Content-Type", "application/json");
             post.setHeader("Accept", "application/json");
         }

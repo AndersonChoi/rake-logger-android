@@ -1,20 +1,17 @@
 package com.skp.di.rake.client.mock;
 
+import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
-import com.skp.di.rake.client.network.RakeNetworkConfig;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
 
-import library.test.json.JSONObjectSpec;
-
 public class MockRakeHttpClient extends RakeHttpClient {
 
-    public MockRakeHttpClient(RakeNetworkConfig config) {
+    public MockRakeHttpClient(RakeMetaConfig config) {
         super(config);
     }
 
