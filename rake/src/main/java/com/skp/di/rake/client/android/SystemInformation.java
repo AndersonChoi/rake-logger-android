@@ -31,9 +31,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class SystemInformation {
-    static private SystemInformation instance;
-
-
     private static final DateFormat baseTimeFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     private static final DateFormat localTimeFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 
@@ -57,13 +54,12 @@ public class SystemInformation {
 
     static private String carrier_name;
     static private String language_code;
-    static private String ip;
 
     static private String manufacturer;
 
     private Context context;
 
-    private SystemInformation(Context context) {
+    public SystemInformation(Context context) {
         this.context = context;
 
         device_model = (null == Build.MODEL) ? UNKNOWN : Build.MODEL;
@@ -89,14 +85,6 @@ public class SystemInformation {
         if (isEmpty((carrier_name))) carrier_name = UNKNOWN;
 
         manufacturer = (null == Build.MANUFACTURER) ? UNKNOWN : Build.MANUFACTURER;
-    }
-
-    static public SystemInformation getInstance(Context appContext) {
-        if (null == instance) {
-            instance = new SystemInformation(appContext);
-        }
-
-        return instance;
     }
 
     // TODO: language_code, network_type 을 생성자로 옮기면, 좀 더 성능 개선 가능

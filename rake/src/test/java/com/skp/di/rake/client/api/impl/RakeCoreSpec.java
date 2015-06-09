@@ -51,11 +51,11 @@ public class RakeCoreSpec {
         log = new JSONObject();
         log.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
 
-        devCore  = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(), devConfig);
+        devCore  = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(null), devConfig);
         devObserver = mock(Observer.class);
         devCore.subscribeOnTest(devObserver);
 
-        liveCore = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(), liveConfig);
+        liveCore = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(null), liveConfig);
         liveObserver = mock(Observer.class);
         liveCore.subscribeOnTest(liveObserver);
     }

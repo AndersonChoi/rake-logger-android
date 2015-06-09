@@ -29,7 +29,7 @@ public class RakeImpl implements Rake {
     }
 
     @Override
-    public void track(JSONObject shuttle) {
+    synchronized public void track(JSONObject shuttle) {
         if (null == shuttle) return;
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
 
@@ -48,7 +48,7 @@ public class RakeImpl implements Rake {
     }
 
     @Override
-    public void flush() {
+    synchronized public void flush() {
         core.flush();
     }
 }

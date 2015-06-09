@@ -1,21 +1,28 @@
 ### Day 12
 
-- ~~Base64 encoding~~
-- URLEncoding Entity
+- ~~HTTPS 로 보내야한다.~~
 
-- HTTPS 로 보내야한다.
+- ~~SystemInformation 싱글턴 제거~~
+- SuperProperty -> Rake 책임.
+
+- ~~RakeLogger.getInstance() 를 Double-Check Locking 으로 변경~~
+> Rake 자체의 인스턴스가 아니기 때문에 필요 없음. getLogger 를 sync 로 바꾸는걸로 해결.
+
+- ~~flush, track synchronized~~
+> track 을 synchronized 할꺼냐는 더 고민.
+
+- ~~Json, UrnEncoded 도 Strategy 로 골라쓸수 있었으면 좋겠다.~~
+
+- ~~Base64 encoding~~
+- ~~URLEncoding Entity~~
+
+- ~~ShuttleProtocol 정리~~
 
 - ~~JSONArray 로 보내야 한다.~~
 - ~~CompressField~~
 
-- SuperProperty -> Rake 책임.
-
-- RakeLogger.getInstance() 를 Double-Check Locking 으로 변경
-- flush, track synchronized
-
-- ~~ShuttleProtocol 정리~~
-
 ### Next
+
 
 - HttpUrlConnection 또는 라이브러리
 - RakeUserConfig 애 `providePrintLog`
@@ -37,6 +44,8 @@
 - maven AAR
 
 #### TBD
+
+- Shuttle instance 에 따라 다른 track 처리
 
 - Flush Interval per Config
 > Rake Instance 마다, flushInterval 을 다르게 할지는 좀 더 생각해볼 문제.

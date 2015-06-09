@@ -42,7 +42,7 @@ public class RakeCore {
         this.flushable = PublishSubject.create();
         this.trackable = PublishSubject.create();
 
-        // TODO: if dev, no timer, flush immediately
+        // if mode is dev, then worker has no timer, and are not flushable
         this.worker = buildWorker(timer, this.flushable, this.trackable, config);
 
         // TODO: subscribe in Live
@@ -74,11 +74,14 @@ public class RakeCore {
         Observable<String> incompleteWorker;
 
         if (RakeUserConfig.Mode.DEV == config.getRunningMode()) {
+
             incompleteWorker = trackable
                     .map(json -> {
                         return client.send(Arrays.asList(json));
                     });
+
         } else { /* Mode.Live */
+
              incompleteWorker = trackable
                 .map(json -> {
                     dao.add(json);

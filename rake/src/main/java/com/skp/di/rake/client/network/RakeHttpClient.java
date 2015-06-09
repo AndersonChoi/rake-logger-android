@@ -1,5 +1,6 @@
 package com.skp.di.rake.client.network;
 
+import com.skp.di.rake.client.api.Rake;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
@@ -16,25 +17,42 @@ import com.skp.di.rake.client.utils.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.util.List;
 
 public class RakeHttpClient {
-    private String endPoint = RakeMetaConfig.END_POINT;
+
+    private RakeNetworkConfig config;
+
+    public RakeHttpClient(RakeNetworkConfig config) {
+        this.config = config;
+    }
 
     public String send(List<JSONObject> tracked) {
 
@@ -59,6 +77,8 @@ public class RakeHttpClient {
             Logger.e("Can't send message to server", e);
         } catch (RakeException e) {
             throw e; /* to support test */
+        } catch(GeneralSecurityException e) {
+            Logger.e("Can't build HttpsClient", e);
         } catch (Exception e) {
             Logger.e("Uncaught exception occurred", e);
         }
@@ -139,10 +159,24 @@ public class RakeHttpClient {
         }
     }
 
-    protected HttpResponse executePost(List<JSONObject> tracked) throws IOException, JSONException {
+    protected HttpResponse executePost(List<JSONObject> tracked)
+            throws IOException, JSONException, GeneralSecurityException {
 
-        HttpClient   client = createHttpClient();
-        HttpPost     post   = createHttpPost(RakeProtocol.buildRequestEntity(tracked));
+        HttpClient   client = null;
+
+        if (config.getEndPoint().startsWith("https"))     client = createHttpsClient();
+        else if (config.getEndPoint().startsWith("http")) client = createHttpClient();
+        else throw new RakeProtocolBrokenException("Unsupported endpoint protocol");
+
+        HttpEntity entity = null;
+
+        if      (config.getContentType() == RakeNetworkConfig.ContentType.JSON)
+            entity = RakeProtocol.buildJsonEntity(tracked);
+        else if (config.getContentType() == RakeNetworkConfig.ContentType.URL_ENCODED_FORM)
+            entity = RakeProtocol.buildUrlEncodedEntity(tracked);
+        else throw new RakeProtocolBrokenException("Unsupported contentType");
+
+        HttpPost     post   = createHttpPost(entity);
         HttpResponse response = client.execute(post);
 
         return response;
@@ -163,26 +197,51 @@ public class RakeHttpClient {
     }
 
     private HttpClient createHttpClient() {
+        HttpParams params = createHttpParams();
+        return new DefaultHttpClient(params);
+    }
+
+
+    private HttpClient createHttpsClient() throws GeneralSecurityException, IOException {
+        HttpParams params = createHttpParams();
+
+        KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+        store.load(null, null);
+
+        SSLSocketFactory sslSocketFactory = new RakeSSLSocketFactory(store);
+        sslSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+
+        Scheme http = new Scheme("http", PlainSocketFactory.getSocketFactory(), 80);
+        Scheme https = new Scheme("https", sslSocketFactory, 80);
+
+        SchemeRegistry registry = new SchemeRegistry();
+        registry.register(http);
+        registry.register(https);
+
+        ClientConnectionManager connectionManager = new ThreadSafeClientConnManager(params, registry);
+
+        return new DefaultHttpClient(connectionManager, params);
+    }
+
+    private HttpParams createHttpParams() {
         HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, RakeMetaConfig.CONNECTION_TIMEOUT);
-        HttpConnectionParams.setSoTimeout(params, RakeMetaConfig.SOCKET_TIMEOUT);
-        HttpClient client = new DefaultHttpClient(params);
+        HttpConnectionParams.setConnectionTimeout(params, config.getConnectionTimeout());
+        HttpConnectionParams.setSoTimeout(params, config.getSocketTimeout());
+        HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+        HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
 
-        return client;
+        return params;
     }
 
-    private HttpPost createHttpPost(StringEntity entity) {
-        HttpPost post = createHttpPost(entity);
-
-        post.setHeader("Content-Type", "application/json");
-        post.setHeader("Accept", "application/json");
-
-        return post;
-    }
-
-    private HttpPost createHttpPost(UrlEncodedFormEntity entity) {
-        HttpPost post = new HttpPost(endPoint);
+    private HttpPost createHttpPost(HttpEntity entity) {
+        HttpPost post = new HttpPost(config.getEndPoint());
         post.setEntity(entity);
+
+        if (config.getContentType() == RakeNetworkConfig.ContentType.JSON) {
+            post.setHeader("Content-Type", "application/json");
+            post.setHeader("Accept", "application/json");
+        }
 
         return post;
     }

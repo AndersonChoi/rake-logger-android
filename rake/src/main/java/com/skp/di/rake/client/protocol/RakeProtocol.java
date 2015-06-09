@@ -32,19 +32,6 @@ public class RakeProtocol {
     static public final String FIELD_NAME_COMPRESS = "compress";
     static public final String FIELD_VALUE_COMPRESS = "plain";
 
-    static public UrlEncodedFormEntity buildRequestEntity(List<JSONObject> tracked) throws JSONException, UnsupportedEncodingException {
-        if (null == tracked || 0 == tracked.size())
-            throw new JSONException("`tracked` is null.");
-
-        // TODO: return buildJsonEntity(tracked);
-        return buildUrlEncodedEntity(tracked);
-    }
-
-    static public HttpEntity buildRequestEntity(JSONObject log) throws JSONException, UnsupportedEncodingException {
-        List<JSONObject> tracked = Arrays.asList(log);
-        return buildRequestEntity(tracked);
-    }
-
     static public UrlEncodedFormEntity buildUrlEncodedEntity(List<JSONObject> tracked) throws JSONException, UnsupportedEncodingException {
         List<NameValuePair> pairs = new ArrayList<>(2);
 

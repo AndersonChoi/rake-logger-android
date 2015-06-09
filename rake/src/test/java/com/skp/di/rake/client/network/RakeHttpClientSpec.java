@@ -2,6 +2,8 @@ package com.skp.di.rake.client.network;
 
 
 import com.skp.di.rake.client.mock.MockRakeHttpClient;
+import com.skp.di.rake.client.mock.TestJsonNetworkConfig;
+import com.skp.di.rake.client.mock.TestUrlEncodedNetworkConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
@@ -11,7 +13,6 @@ import com.skp.di.rake.client.protocol.exception.NotRegisteredRakeTokenException
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
 
-import org.apache.tools.ant.taskdefs.condition.Http;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -36,13 +37,11 @@ import static org.junit.Assert.assertEquals;
 public class RakeHttpClientSpec {
 
     RakeHttpClient mockClient;
-    RakeHttpClient realClient;
     MockWebServer  server;
 
     @Before
     public void setUp() throws JSONException, IOException {
-        mockClient = new MockRakeHttpClient();
-        realClient = new RakeHttpClient();
+        mockClient  = new MockRakeHttpClient(null);
 
         JSONObject body = new JSONObject();
         body.put("errorCode", 20000);
@@ -52,7 +51,7 @@ public class RakeHttpClientSpec {
                 .setResponseCode(200)
                 .setBody(body.toString()));
 
-        server.start(9001);
+        server.start(9010);
     }
 
     @After
@@ -61,18 +60,25 @@ public class RakeHttpClientSpec {
     }
 
     @Test
-    public void testHttpHeader() throws InterruptedException {
-        realClient.send(Arrays.asList(new JSONObject()));
+    public void testHttpHeaderWithUrlEncodedContent() throws InterruptedException {
+        RakeHttpClient httpClient  = new RakeHttpClient(new TestUrlEncodedNetworkConfig());
+        httpClient.send(Arrays.asList(new JSONObject()));
 
         RecordedRequest requested = server.takeRequest();
 
-        // header assert
         assertEquals("POST /track HTTP/1.1", requested.getRequestLine());
         assertEquals("application/x-www-form-urlencoded", requested.getHeader("Content-Type"));
-//        assertEquals("application/json", requested.getHeader("Content-Type"));
-//        assertEquals("application/json", requested.getHeader("Accept"));
+    }
 
-        // body assert should be done in RakeSpec not here.
+    @Test
+    public void testHttpHeaderWithJsonContent() throws InterruptedException {
+        RakeHttpClient httpClient  = new RakeHttpClient(new TestJsonNetworkConfig());
+        httpClient.send(Arrays.asList(new JSONObject()));
+
+        RecordedRequest requested = server.takeRequest();
+
+        assertEquals("application/json", requested.getHeader("Content-Type"));
+        assertEquals("application/json", requested.getHeader("Accept"));
     }
 
     @Test(expected= InsufficientJsonFieldException.class)
