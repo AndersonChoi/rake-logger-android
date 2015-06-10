@@ -1,6 +1,9 @@
 package com.skp.di.rake.client.api.impl;
 
+import android.util.Log;
+
 import com.skp.di.rake.client.api.RakeUserConfig;
+import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.protocol.RakeProtocol;
@@ -17,6 +20,8 @@ import rx.Observer;
 import rx.Scheduler;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.observables.ConnectableObservable;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
@@ -27,6 +32,8 @@ public class RakeCore {
     private PublishSubject<Integer>    flushable;
     private PublishSubject<JSONObject> trackable;
 
+    private Observable<Integer> timer;
+
     private Observable<String> worker;
     private Subscription subscription;
 
@@ -34,7 +41,7 @@ public class RakeCore {
         this.dao    = dao;
         this.client = client;
 
-        Observable<Integer> timer = Observable
+        this.timer = Observable
                 .interval(config.getFlushInterval() ,TimeUnit.SECONDS)
                 .startWith(-1L)
                 .map(x -> null);
@@ -43,7 +50,12 @@ public class RakeCore {
         this.trackable = PublishSubject.create();
 
         // if mode is dev, then worker has no timer, and are not flushable
-        this.worker = buildWorker(timer, this.flushable, this.trackable, config);
+
+        if (RakeUserConfig.Mode.DEV == config.getRunningMode())
+            this.worker = buildDevWorker(config);
+        else /* Mode.LIVE */
+            this.worker = buildLiveWorker(config);
+
 
         // TODO: subscribe in Live
         this.subscription = subscribe(this.subscription, this.worker, null,
@@ -65,22 +77,23 @@ public class RakeCore {
                 });
     }
 
-    private Observable<String> buildWorker(
-            Observable<Integer> timer,
-            PublishSubject<Integer> flushable,
-            PublishSubject<JSONObject> trackable,
-            RakeUserConfig config) {
+    private Observable<String> buildDevWorker(RakeUserConfig config) {
+        return  trackable
+                .observeOn(Schedulers.io())
+                .map(json -> {
+                    Logger.i("Thread: " + Thread.currentThread().getName());
+                    return client.send(Arrays.asList(json));
+                })
+                .onErrorReturn(t -> {
+                    // TODO: onErrorReturn
+                    Logger.e("exception occurred in RakeCore", t);
+                    return null;
+                });
+    }
 
-        Observable<String> incompleteWorker;
-
-        if (RakeUserConfig.Mode.DEV == config.getRunningMode()) {
-
-            incompleteWorker = trackable
-                    .map(json -> client.send(Arrays.asList(json)));
-
-        } else { /* Mode.Live */
-
-             incompleteWorker = trackable
+    private Observable<String> buildLiveWorker(RakeUserConfig config) {
+        return trackable
+                .observeOn(Schedulers.io())
                 .map(json -> {
                     dao.add(json);
                     return dao.getCount();
@@ -89,14 +102,12 @@ public class RakeCore {
                 .map(flushCommanded -> {
                     List<JSONObject> tracked = dao.clear();
                     return client.send(tracked); /* return response. it might be null */
-                }).filter(responseBody -> null != responseBody);
-        }
-
-        return incompleteWorker.onErrorReturn(t -> {
-            // TODO: onErrorReturn
-            Logger.e("exception occurred in RakeCore", t);
-            return null;
-        });
+                }).filter(responseBody -> null != responseBody)
+                .onErrorReturn(t -> {
+                    // TODO: onErrorReturn
+                    Logger.e("exception occurred in RakeCore", t);
+                    return null;
+                });
     }
 
     private Subscription subscribe(Subscription subscription, Observable<String> worker,

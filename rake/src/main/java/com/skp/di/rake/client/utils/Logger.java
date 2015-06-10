@@ -14,6 +14,7 @@ public class Logger {
     }
 
     static public void i(String message) {
-        Log.i(RakeMetaConfig.TAG, message);
+        if (null != message)
+            Log.i(RakeMetaConfig.TAG, message);
     }
 }
