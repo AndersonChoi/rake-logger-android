@@ -10,8 +10,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import com.skp.di.rake.client.mock.SampleRakeConfig1;
-import com.skp.di.rake.client.mock.SampleRakeConfig2;
+import com.skp.di.rake.client.mock.SampleDevConfig;
+import com.skp.di.rake.client.mock.SampleDevConfig2;
 
 import java.util.HashMap;
 
@@ -35,7 +35,7 @@ public class RakeUserConfigSpec {
 
     @Test
     public void testConfigShouldReturnProperTokenByRunningMode() {
-        RakeUserConfig config = new SampleRakeConfig1();
+        RakeUserConfig config = new SampleDevConfig2();
 
         assertEquals(RakeUserConfig.Mode.DEV, config.getRunningMode());
         assertEquals(config.getDevToken(), config.getToken());
@@ -43,8 +43,8 @@ public class RakeUserConfigSpec {
 
     @Test
     public void testRakeUserConfigEquals() {
-        RakeUserConfig config1 = new SampleRakeConfig1();
-        RakeUserConfig config2 = new SampleRakeConfig2();
+        RakeUserConfig config1 = new SampleDevConfig();
+        RakeUserConfig config2 = new SampleDevConfig2();
 
         assertTrue(config1.equals(config1));
         assertFalse(config1.equals(config2));
@@ -54,8 +54,8 @@ public class RakeUserConfigSpec {
 
     @Test
     public void testRakeIsSingletonPerUserConfig() {
-        RakeUserConfig config1 = new SampleRakeConfig1();
-        RakeUserConfig config2 = new SampleRakeConfig2();
+        RakeUserConfig config1 = new SampleDevConfig();
+        RakeUserConfig config2 = new SampleDevConfig2();
 
         // Can't test using Rake instance due to Context
         HashMap<RakeUserConfig, TestLogger> map = new HashMap<>();

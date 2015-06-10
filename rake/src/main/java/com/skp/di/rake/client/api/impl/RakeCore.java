@@ -76,9 +76,7 @@ public class RakeCore {
         if (RakeUserConfig.Mode.DEV == config.getRunningMode()) {
 
             incompleteWorker = trackable
-                    .map(json -> {
-                        return client.send(Arrays.asList(json));
-                    });
+                    .map(json -> client.send(Arrays.asList(json)));
 
         } else { /* Mode.Live */
 

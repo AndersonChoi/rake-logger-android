@@ -88,5 +88,10 @@ public class ShuttleProtocolSpec {
         JSONObject _$fieldOrder = sentinel_meta.getJSONObject(ShuttleProtocol.FIELD_NAME_FIELD_ORDER);
         String _$schemaId = sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_SCHEMA_ID);
     }
+
+    @Test
+    public void testAddSuperProperty() {
+        // TODO
+    }
 }
 

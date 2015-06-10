@@ -1,8 +1,5 @@
 package library.test.rxjava;
 
-import com.skp.di.rake.client.api.Rake;
-import com.skp.di.rake.client.api.RakeFactory;
-import com.skp.di.rake.client.mock.SampleRakeConfig1;
 import com.skp.di.rake.client.utils.TestUtils;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -14,14 +11,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 

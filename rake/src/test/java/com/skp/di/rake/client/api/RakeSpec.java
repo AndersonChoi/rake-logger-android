@@ -5,32 +5,19 @@ import com.skp.di.rake.client.api.impl.RakeCore;
 import com.skp.di.rake.client.api.impl.RakeImpl;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.mock.MockSystemInformation;
-import com.skp.di.rake.client.mock.SampleRakeConfig1;
-import com.skp.di.rake.client.protocol.ShuttleProtocol;
-import com.skp.di.rake.client.utils.Logger;
+import com.skp.di.rake.client.mock.SampleDevConfig2;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,7 +45,7 @@ public class RakeSpec {
     @Before
     public void setUp() throws IOException, JSONException {
         ShadowLog.stream = System.out; /* Robolectric setting */
-        config = new SampleRakeConfig1();
+        config = new SampleDevConfig2();
         mockCore = mock(RakeCore.class);
 
         mockSysInfo = mock(SystemInformation.class);

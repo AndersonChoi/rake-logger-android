@@ -22,10 +22,13 @@ public class RakeImpl implements Rake {
     private RakeUserConfig config;
     private SystemInformation sysInfo;
 
+    private JSONObject superProperties;
+
     public RakeImpl(RakeUserConfig config, RakeCore core, SystemInformation info) {
         this.config = config;
         this.core = core;
         this.sysInfo = info;
+        this.superProperties = new JSONObject();
     }
 
     @Override
@@ -48,7 +51,7 @@ public class RakeImpl implements Rake {
     }
 
     @Override
-    synchronized public void flush() {
+    public void flush() {
         core.flush();
     }
 }

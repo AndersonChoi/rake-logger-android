@@ -15,6 +15,9 @@ repositories {
 apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda'
 
+archivesBaseName = 'rake-android'
+version = "0.4.1-SNAPSHOT"
+
 android {
     compileSdkVersion 21
     buildToolsVersion '21.0.1'
@@ -27,14 +30,6 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 21
-        versionCode 1
-        versionName "0.4.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
     }
 }
 
@@ -63,25 +58,45 @@ dependencies {
 def configFilePath = project.buildscript.sourceFile.parent +
         "/src/main/java/com/skp/di/rake/client/config/RakeMetaConfig.java"
 
-task updateRakeVersion(type: Copy) {
+//task updateRakeVersion(type: Copy) {
+//
+//    String pattern = ~/"android_(.)*"/
+//    String newVersion = "\"android_${version}\""
+//
+//    def configFile = new File(configFilePath)
+//
+//    String content = configFile.getText('UTF-8')
+//    content = content.replaceAll(pattern, newVersion) /* replace version number */
+//
+//    // validate rake version
+//    String replacedVersion = content.find(pattern)
+//    assert(newVersion == replacedVersion)
+//
+//    configFile.write(content, 'UTF-8')
+//
+//    println "[INFO] version number in RakeMetaConfig.java replace with $version"
+//}
 
-    String v = android.defaultConfig.versionName
+// tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn updateRakeVersion }
 
-    def pattern = ~/"android_(.)*"/
-    def newVersion = "\"android_${v}\""
+build.doLast {
+    String releaseJarName = "${archivesBaseName}-${version}.jar"
+    String releaseDir = "release/"
 
-    def configFile = new File(configFilePath)
+    // extract jar from aar, then copy it into 'release' dir
+    // ref: https://github.com/urbanairship/ua-unity-plugin/blob/79b997a24fce24eff965e6c905b68d36758ebe96/android-plugin/build.gradle#L77
+    copy {
+        from zipTree(file("build/outputs/aar/rake-release.aar"))
+        into releaseDir
+        rename "classes.jar", releaseJarName
+        exclude "R.txt", "assets", "aidl", "aapt/**/*", "res/**/*", "AndroidManifest.xml"
+        includeEmptyDirs = false
+    }
 
-    String content = configFile.getText('UTF-8')
-    content = content.replaceAll(pattern, newVersion) /* replace version number */
-
-    // validate rake version
-    String replacedVersion = content.find(pattern)
-    assert(newVersion == replacedVersion)
-
-    configFile.write(content, 'UTF-8')
-
-    println "[INFO] version number in RakeMetaConfig.java replace with $v"
+    copy {
+        from releaseDir
+        into releaseDir
+        rename releaseJarName, "rake-android-current.jar"
+    }
 }
 
-tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn updateRakeVersion }
