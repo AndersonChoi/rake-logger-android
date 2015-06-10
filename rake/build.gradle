@@ -32,13 +32,13 @@ android {
         targetSdkVersion 21
     }
 }
-//
-//retrolambda {
-//    jdk System.getenv("JAVA8_HOME")
-//    oldJdk System.getenv("JAVA6_HOME")
-//    javaVersion JavaVersion.VERSION_1_6
-//    jvmArgs '-noverify'
-//}
+
+retrolambda {
+    jdk System.getenv("JAVA8_HOME")
+    oldJdk System.getenv("JAVA6_HOME")
+    javaVersion JavaVersion.VERSION_1_6
+    jvmArgs '-noverify'
+}
 
 dependencies {
     compile 'com.android.support:appcompat-v7:22.1.1'

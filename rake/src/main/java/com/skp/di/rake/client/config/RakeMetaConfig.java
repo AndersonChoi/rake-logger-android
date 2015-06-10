@@ -6,7 +6,7 @@ import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 public class RakeMetaConfig {
     /* fields and enums */
     public enum ContentType { JSON, URL_ENCODED_FORM }
-    private RakeUserConfig.Mode runningMode;
+    private RakeUserConfig.RUNNING_ENV runningMode;
     static public final String TAG = "RAKE";
     private String endPoint;
 
@@ -23,8 +23,8 @@ public class RakeMetaConfig {
     public RakeMetaConfig(RakeUserConfig config) {
         this.runningMode = config.getRunningMode();
 
-        if (RakeUserConfig.Mode.DEV == runningMode) endPoint = DEV_MODE_ENDPOINT;
-        else if (RakeUserConfig.Mode.LIVE == runningMode) endPoint = LIVE_MODE_ENDPOINT;
+        if (RakeUserConfig.RUNNING_ENV.DEV == runningMode) endPoint = DEV_MODE_ENDPOINT;
+        else if (RakeUserConfig.RUNNING_ENV.LIVE == runningMode) endPoint = LIVE_MODE_ENDPOINT;
         else throw new RakeProtocolBrokenException("Can't set endpoint due to invalid runningMode from RakeUserConfig");
     }
 

@@ -11,7 +11,6 @@ import android.os.Build;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -92,8 +91,8 @@ public class SystemInformation {
         Date now = new Date();
         JSONObject defaultProperties = new JSONObject();
 
-        String appVersion = (RakeUserConfig.Mode.DEV == config.getRunningMode()) ?
-                app_version + app_build_date : app_version;
+        String appVersion = (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode()) ?
+                app_version + "_" + app_build_date : app_version;
 
         Boolean isWifi = isWifiConnected();
         String network_type;
@@ -170,7 +169,7 @@ public class SystemInformation {
             ZipEntry ze = zf.getEntry("classes.dex");
             long time = ze.getTime();
 
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
             TimeZone tz = TimeZone.getDefault(); /* current TimeZone */
             formatter.setTimeZone(tz);
 

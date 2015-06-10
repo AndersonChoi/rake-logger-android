@@ -99,7 +99,7 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void testCoreWithDeConfigShouldFlushWhenTrackCalled() {
+    public void testCoreWithDevConfigShouldFlushWhenTrackCalled() {
         assertEquals(0, devCore.getLogCount());
 
         devCore.track(log);

@@ -26,7 +26,6 @@ public class RakeFactory {
 
         // TODO remove config: 추후에 core per rake instance 가 될 수 있으므로 TBD
         if (null == core) {
-
             RakeDao dao           = new RakeDaoMemory();
             RakeHttpClient client = new RakeHttpClient(new RakeMetaConfig(config));
             core = new RakeCore(dao, client, config);

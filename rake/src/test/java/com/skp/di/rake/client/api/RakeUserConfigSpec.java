@@ -37,7 +37,7 @@ public class RakeUserConfigSpec {
     public void testConfigShouldReturnProperTokenByRunningMode() {
         RakeUserConfig config = new SampleDevConfig2();
 
-        assertEquals(RakeUserConfig.Mode.DEV, config.getRunningMode());
+        assertEquals(RakeUserConfig.RUNNING_ENV.DEV, config.getRunningMode());
         assertEquals(config.getDevToken(), config.getToken());
     }
 

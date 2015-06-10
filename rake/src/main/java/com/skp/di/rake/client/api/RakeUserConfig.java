@@ -1,30 +1,29 @@
 package com.skp.di.rake.client.api;
 
-import com.skp.di.rake.client.config.RakeMetaConfig;
-
 public abstract class RakeUserConfig {
-    /* function user should implement */
 
-    abstract public Mode provideRunningMode();
+    /* function user should implement */
+    abstract public RUNNING_ENV provideRunningMode();
     abstract public String provideDevToken();
     abstract public String provideLiveToken();
-    abstract public int provideFlushInterval();
+    abstract public int provideFlushIntervalAsSecond();
     abstract public int provideMaxLogTrackCount();
+    abstract public boolean provideWillPrintDebugInfo();
 
     /* wrapping functions for readability */
-
-    public final Mode getRunningMode() { return provideRunningMode(); }
+    public final RUNNING_ENV getRunningMode() { return provideRunningMode(); }
     public final String getDevToken()  { return provideDevToken();    }
     public final String getLiveToken() { return provideLiveToken();   }
-    public int getFlushInterval() { return provideFlushInterval(); }
+    public int getFlushInterval() { return provideFlushIntervalAsSecond(); }
     public int getMaxLogTrackCount() { return provideMaxLogTrackCount(); }
+    public boolean getWillPrintDebugInfo() { return provideWillPrintDebugInfo(); };
 
     public final String getToken() {
-        if (provideRunningMode() == Mode.DEV) return provideDevToken();
+        if (provideRunningMode() == RUNNING_ENV.DEV) return provideDevToken();
         else                                  return provideLiveToken();
     }
 
-    public enum Mode {DEV, LIVE}
+    public enum RUNNING_ENV {DEV, LIVE}
 
     @Override
     public boolean equals(Object other) {

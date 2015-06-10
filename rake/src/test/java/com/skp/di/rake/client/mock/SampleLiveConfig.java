@@ -4,8 +4,8 @@ import com.skp.di.rake.client.api.RakeUserConfig;
 
 public class SampleLiveConfig extends RakeUserConfig {
     @Override
-    public Mode provideRunningMode() {
-        return Mode.LIVE;
+    public RUNNING_ENV provideRunningMode() {
+        return RUNNING_ENV.LIVE;
     }
 
     @Override
@@ -19,12 +19,17 @@ public class SampleLiveConfig extends RakeUserConfig {
     }
 
     @Override
-    public int provideFlushInterval() {
+    public int provideFlushIntervalAsSecond() {
         return 10; /* seconds */
     }
 
     @Override
     public int provideMaxLogTrackCount() {
         return 5;
+    }
+
+    @Override
+    public boolean provideWillPrintDebugInfo() {
+        return false;
     }
 }

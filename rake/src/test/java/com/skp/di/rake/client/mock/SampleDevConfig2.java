@@ -5,7 +5,7 @@ import com.skp.di.rake.client.api.RakeUserConfig;
 public class SampleDevConfig2 extends RakeUserConfig {
 
     @Override
-    public Mode provideRunningMode() { return Mode.DEV; }
+    public RUNNING_ENV provideRunningMode() { return RUNNING_ENV.DEV; }
 
     @Override
     public String provideDevToken() { return "dev1a021"; }
@@ -14,12 +14,17 @@ public class SampleDevConfig2 extends RakeUserConfig {
     public String provideLiveToken() { return "live2k03"; }
 
     @Override
-    public int provideFlushInterval() {
+    public int provideFlushIntervalAsSecond() {
         return 60;
     }
 
     @Override
     public int provideMaxLogTrackCount() {
         return 5;
+    }
+
+    @Override
+    public boolean provideWillPrintDebugInfo() {
+        return false;
     }
 }

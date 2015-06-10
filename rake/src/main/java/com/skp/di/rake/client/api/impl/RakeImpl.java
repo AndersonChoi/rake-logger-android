@@ -41,6 +41,10 @@ public class RakeImpl implements Rake {
         try {
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackableShuttle = ShuttleProtocol.getTrackableShuttle(shuttle, defaultProperties);
+
+            if(config.getWillPrintDebugInfo())
+                Logger.i("Tracked Shuttle: \n" + trackableShuttle.toString());
+
         } catch (JSONException e) {
             Logger.e("Can't build willBeTracked", e);
         } catch (Exception e) {
