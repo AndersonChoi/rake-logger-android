@@ -1,6 +1,5 @@
 package com.skp.di.rake.client.protocol;
 
-import com.skp.di.rake.client.utils.Logger;
 import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.NameValuePair;
@@ -19,7 +18,6 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 

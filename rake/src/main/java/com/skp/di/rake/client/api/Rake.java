@@ -6,7 +6,8 @@ import android.content.SharedPreferences;
 import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.core.RakeCore;
 import com.skp.di.rake.client.protocol.ShuttleProtocol;
-import com.skp.di.rake.client.utils.Logger;
+import com.skp.di.rake.client.utils.RakeLogger;
+import com.skp.di.rake.client.utils.RakeLoggerFactory;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,12 +19,14 @@ public class Rake {
     private RakeUserConfig config;
     private SystemInformation sysInfo;
 
+    private RakeLogger debugLogger;
 
     public Rake(RakeUserConfig config, RakeCore core, Context context, SystemInformation sysInfo) {
         this.config = config;
         this.core = core;
         this.sysInfo = sysInfo;
         this.superProperties = new JSONObject();
+        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         legacySupport(context, config);
     }
@@ -40,13 +43,12 @@ public class Rake {
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackable = ShuttleProtocol.getTrackable(shuttle, superProperties, defaultProperties);
 
-            if(config.getWillPrintDebugInfo())
-                Logger.i("Tracked Shuttle: \n" + trackable.toString());
+            debugLogger.i("Tracked Shuttle: \n" + trackable.toString());
 
         } catch (JSONException e) {
-            Logger.e("Can't build trackable", e);
+            RakeLogger.e("Can't build trackable", e);
         } catch (Exception e) {
-            Logger.e("Can't build trackable", e);
+            RakeLogger.e("Can't build trackable", e);
         }
 
         if (null != trackable) core.track(trackable);
@@ -119,7 +121,7 @@ public class Rake {
                     this.superProperties.put(key, superProps.get(key));
                 }
             } catch (JSONException e) {
-                Logger.e("Can't add super property", e);
+                RakeLogger.e("Can't add super property", e);
             }
         }
 
@@ -157,7 +159,7 @@ public class Rake {
         try {
             superProperties = new JSONObject(props);
         } catch (JSONException e) {
-            Logger.e("Cannot parse stored superProperties", e);
+            RakeLogger.e("Cannot parse stored superProperties", e);
             superProperties = new JSONObject();
             clearPreferences();
         }

@@ -16,7 +16,7 @@ import android.view.WindowManager;
 
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
-import com.skp.di.rake.client.utils.Logger;
+import com.skp.di.rake.client.utils.RakeLogger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -177,9 +177,9 @@ public class SystemInformation {
 
             zf.close();
         } catch(PackageManager.NameNotFoundException e) {
-            Logger.e("System information constructed with a context that apparently doesn't exist.", e);
+            RakeLogger.e("System information constructed with a context that apparently doesn't exist.", e);
         } catch(IOException e) {
-            Logger.e("Can't create ZipFile Instance using given ApplicationInfo", e);
+            RakeLogger.e("Can't create ZipFile Instance using given ApplicationInfo", e);
         }
 
         return buildDate;

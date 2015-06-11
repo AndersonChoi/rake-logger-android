@@ -1,10 +1,10 @@
 package com.skp.di.rake.client.core;
 
-import com.skp.di.rake.client.api.Rake;
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
-import com.skp.di.rake.client.utils.Logger;
+import com.skp.di.rake.client.utils.RakeLogger;
+import com.skp.di.rake.client.utils.RakeLoggerFactory;
 
 import org.json.JSONObject;
 
@@ -32,16 +32,19 @@ public class RakeCore {
     private Observable<String> worker;
     private Subscription subscription;
 
+    private RakeLogger debugLogger;
+
     public RakeCore(RakeDao dao, RakeHttpClient client, RakeUserConfig config) {
         this.dao    = dao;
         this.client = client;
         this.config = config;
+        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         this.timer = Observable
                 .interval(config.getFlushInterval() ,TimeUnit.SECONDS)
                 .startWith(-1L)
                 .map(x -> {
-                    if (config.getWillPrintDebugInfo()) Logger.i("Timer Fired");
+                    debugLogger.i("Timer Fired");
                     return null;
                 });
 
@@ -53,17 +56,17 @@ public class RakeCore {
                 new Observer<String>() {
                     @Override
                     public void onCompleted() {
-                        if (config.getWillPrintDebugInfo()) Logger.i("RakeCore onCompleted");
+                        debugLogger.i("RakeCore onCompleted");
                     }
 
                     @Override
                     public void onError(Throwable t) {
-                        if (config.getWillPrintDebugInfo()) Logger.e("RakeCore.onError", t);
+                        debugLogger.e("RakeCore.onError", t);
                     }
 
                     @Override
                     public void onNext(String response) {
-                        if (config.getWillPrintDebugInfo()) Logger.i("Server Response: \n" + response);
+                        debugLogger.i("Server Response: \n" + response);
                     }
                 });
     }
@@ -72,8 +75,7 @@ public class RakeCore {
         return  trackable
                 .observeOn(scheduler)
                 .map(json -> {
-                    if (config.getWillPrintDebugInfo())
-                        Logger.i("Network Thread: " + Thread.currentThread().getName());
+                    debugLogger.i("Network Thread: " + Thread.currentThread().getName());
                     return client.send(Arrays.asList(json));
                 });
     }
@@ -83,9 +85,8 @@ public class RakeCore {
                 .observeOn(scheduler)
                 .map(json -> {
                     dao.add(json);
-                    if (config.getWillPrintDebugInfo()
-                            && dao.getCount() == config.getMaxLogTrackCount())
-                        Logger.i("Rake is full. Auto-flushed");
+                    if (dao.getCount() == config.getMaxLogTrackCount())
+                        debugLogger.i("Rake is full. Auto-flushed");
 
                     return dao.getCount();
                 }).filter(count -> count == config.getMaxLogTrackCount())
@@ -108,7 +109,7 @@ public class RakeCore {
         return worker
                 .onErrorReturn(t -> {
                     // TODO: onErrorReturn
-                    Logger.e("exception occurred in RakeCore", t);
+                    RakeLogger.e("exception occurred in RakeCore", t);
                     return null;
                 })
                 .subscribeOn(scheduler)

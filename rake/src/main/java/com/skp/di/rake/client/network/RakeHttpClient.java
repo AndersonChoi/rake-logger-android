@@ -10,7 +10,7 @@ import com.skp.di.rake.client.protocol.exception.NotRegisteredRakeTokenException
 import com.skp.di.rake.client.protocol.exception.RakeException;
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
-import com.skp.di.rake.client.utils.Logger;
+import com.skp.di.rake.client.utils.RakeLogger;
 import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.HttpEntity;
@@ -64,19 +64,19 @@ public class RakeHttpClient {
             handleRakeException(statusCode, responseBody);
 
         } catch(UnsupportedEncodingException e) {
-            Logger.e("Cant' build StringEntity using body", e);
+            RakeLogger.e("Cant' build StringEntity using body", e);
         } catch(JSONException e) {
-            Logger.e("Can't build RakeRequestBody", e);
+            RakeLogger.e("Can't build RakeRequestBody", e);
         } catch(ClientProtocolException e) {
-            Logger.e("Can't send message to server", e);
+            RakeLogger.e("Can't send message to server", e);
         } catch (IOException e) {
-            Logger.e("Can't send message to server", e);
+            RakeLogger.e("Can't send message to server", e);
         } catch (RakeException e) {
             throw e; /* to support test */
         } catch(GeneralSecurityException e) {
-            Logger.e("Can't build HttpsClient", e);
+            RakeLogger.e("Can't build HttpsClient", e);
         } catch (Exception e) {
-            Logger.e("Uncaught exception occurred", e);
+            RakeLogger.e("Uncaught exception occurred", e);
         }
 
         return responseBody;
@@ -86,19 +86,19 @@ public class RakeHttpClient {
         try {
             verifyResponse(statusCode, responseBody);
         } catch (RakeProtocolBrokenException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         } catch (InsufficientJsonFieldException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         } catch (InvalidJsonSyntaxException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         } catch (NotRegisteredRakeTokenException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         } catch (WrongRakeTokenUsageException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         } catch (InvalidEndPointException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         } catch (InternalServerErrorException e) {
-            Logger.e(e);
+            RakeLogger.e(e);
         }
     }
 

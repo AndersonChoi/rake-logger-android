@@ -30,6 +30,6 @@ public class SampleDevConfig extends RakeUserConfig {
 
     @Override
     public boolean provideWillPrintDebugInfo() {
-        return false;
+        return true;
     }
 }

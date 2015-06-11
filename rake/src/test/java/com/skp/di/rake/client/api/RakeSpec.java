@@ -4,10 +4,8 @@ import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.core.RakeCore;
 import com.skp.di.rake.client.mock.MockSystemInformation;
-import com.skp.di.rake.client.mock.SampleDevConfig;
 import com.skp.di.rake.client.mock.SampleDevConfig2;
 import com.skp.di.rake.client.protocol.ShuttleProtocol;
-import com.skp.di.rake.client.utils.Logger;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
 
 import org.json.JSONException;

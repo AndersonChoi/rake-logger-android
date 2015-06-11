@@ -62,7 +62,7 @@ public class StringUtils {
                 sb.append(line);
             }
         } catch (IOException e) {
-            Logger.e("Can't convert inputstream to string", e);
+            RakeLogger.e("Can't convert inputstream to string", e);
         } finally {
             closeQuietly(br);
         }

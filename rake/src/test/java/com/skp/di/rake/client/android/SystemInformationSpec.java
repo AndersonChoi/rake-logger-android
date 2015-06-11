@@ -2,26 +2,14 @@ package com.skp.di.rake.client.android;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.Build;
-import android.provider.Settings;
 
-import com.skp.di.rake.client.utils.Logger;
-
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
-import org.robolectric.internal.Shadow;
-import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLog;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

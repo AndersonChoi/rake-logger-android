@@ -1,17 +1,16 @@
 package library.test.json;
 
 
-import com.skp.di.rake.client.utils.Logger;
+import com.skp.di.rake.client.mock.SampleDevConfig;
+import com.skp.di.rake.client.utils.RakeLogger;
+import com.skp.di.rake.client.utils.RakeLoggerFactory;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.internal.Shadow;
 import org.robolectric.shadows.ShadowLog;
 
 import static junit.framework.TestCase.assertNotNull;
@@ -41,7 +40,5 @@ public class JSONObjectSpec {
       JSONObject json = new JSONObject();
       json.put("key1", 3);
       json.put("key2", "3");
-
-      Logger.i(this.getClass().getName());
    }
 }
