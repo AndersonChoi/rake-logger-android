@@ -2,7 +2,6 @@ package com.skp.di.rake.client.protocol;
 
 import com.skp.di.rake.client.mock.MockSystemInformation;
 import com.skp.di.rake.client.mock.SampleDevConfig;
-import com.skp.di.rake.client.utils.Logger;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
 
 import org.json.JSONArray;
@@ -16,7 +15,6 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -36,17 +34,20 @@ public class ShuttleProtocolSpec {
      */
 
     AppSampleSentinelShuttle shuttle;
+    JSONObject emptySuperProps;
 
     @Before
     public void setUp() {
         ShadowLog.stream = System.out; /* Robolectric setting */
         shuttle = new AppSampleSentinelShuttle();
+        emptySuperProps = new JSONObject();
     }
 
     @Test
-    public void testShuttleProtocolCanReturn_extractedMetaAndProperties() throws JSONException {
+    public void test_ShuttleProtocolCanReturn_extractedMetaAndProperties() throws JSONException {
         JSONObject defaultProperties = MockSystemInformation.getDefaultProperties(new SampleDevConfig());
-        JSONObject trackable = ShuttleProtocol.getTrackableShuttle(shuttle.toJSONObject(), defaultProperties);
+        JSONObject trackable =
+                ShuttleProtocol.getTrackable(shuttle.toJSONObject(), emptySuperProps, defaultProperties);
 
         assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_SCHEMA_ID));
         assertTrue(trackable.has(ShuttleProtocol.FIELD_NAME_PROJECT_ID));
@@ -60,9 +61,9 @@ public class ShuttleProtocolSpec {
     }
 
     @Test
-    public void testTrackableHasValidDefaultProperties() throws JSONException {
+    public void test_TrackableHasValidDefaultProperties() throws JSONException {
         JSONObject defaultProperties = MockSystemInformation.getDefaultProperties(new SampleDevConfig());
-        JSONObject trackable = ShuttleProtocol.getTrackableShuttle(shuttle.toJSONObject(), defaultProperties);
+        JSONObject trackable = ShuttleProtocol.getTrackable(shuttle.toJSONObject(), emptySuperProps, defaultProperties);
 
         JSONObject properties = trackable.getJSONObject(ShuttleProtocol.FIELD_NAME_PROPERTIES);
 
@@ -81,17 +82,12 @@ public class ShuttleProtocolSpec {
     }
 
     @Test
-    public void testShuttleHasSentinelMeta() throws JSONException {
+    public void test_ShuttleHasSentinelMeta() throws JSONException {
         JSONObject sentinel_meta = shuttle.toJSONObject().getJSONObject(ShuttleProtocol.FIELD_NAME_SENTINEL_META);
         JSONArray _$encryptionFields = (JSONArray) sentinel_meta.get(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS);
         String _$projectId = sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_PROJECT_ID);
         JSONObject _$fieldOrder = sentinel_meta.getJSONObject(ShuttleProtocol.FIELD_NAME_FIELD_ORDER);
         String _$schemaId = sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_SCHEMA_ID);
-    }
-
-    @Test
-    public void testAddSuperProperty() {
-        // TODO
     }
 }
 

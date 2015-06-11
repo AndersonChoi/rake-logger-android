@@ -1,6 +1,7 @@
-package com.skp.di.rake.client.api.impl;
+package com.skp.di.rake.client.core;
 
 
+import com.skp.di.rake.client.core.RakeCore;
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.mock.MockRakeHttpClient;

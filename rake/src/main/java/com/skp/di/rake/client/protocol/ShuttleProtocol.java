@@ -17,15 +17,21 @@ public class ShuttleProtocol {
     static public final String FIELD_NAME_SENTINEL_META     = "sentinel_meta";
     static public final String FIELD_NAME_ENCRYPTION_FIELDS = "_$encryptionFields";
 
-    static public JSONObject getTrackableShuttle(JSONObject shuttle, JSONObject defaultProperties)
-            throws JSONException {
-        JSONObject trackableShuttle = extractSentinelMeta(shuttle);
-        JSONObject userProperties   = extractProperties(shuttle);
-        JSONObject properties = mergeProperties(userProperties, defaultProperties);
 
-        trackableShuttle.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
+    static public JSONObject getTrackable(JSONObject shuttle,
+                                          JSONObject superProps,
+                                          JSONObject defaultProps) throws JSONException {
 
-        return trackableShuttle;
+        JSONObject trackable = extractSentinelMeta(shuttle);
+        JSONObject shuttleProps   = extractProperties(shuttle);
+
+        // must be in order 'shuttleProps, superProps, defaultProps'
+        // precedence: superProps < shuttleProps < defaultProps
+        JSONObject properties = mergeProperties(shuttleProps, superProps, defaultProps);
+
+        trackable.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
+
+        return trackable;
     }
 
     static private JSONObject extractSentinelMeta(JSONObject shuttle) throws JSONException {
@@ -64,25 +70,35 @@ public class ShuttleProtocol {
     }
 
 
-    // write `first` first, then write `second`
-    static private JSONObject mergeProperties(JSONObject first, JSONObject second) throws JSONException {
+    /* shuttle property means that the property a user inserted using a shuttle */
+    static private JSONObject mergeProperties(JSONObject shuttleProps,
+                                              JSONObject superProps,
+                                              JSONObject defaultProps)
+            throws JSONException {
+
         JSONObject properties = new JSONObject();
 
-        /* copy first */
-        Iterator<String> iter = first.keys();
-        while(iter.hasNext()) {
-            String key = iter.next();
-            properties.put(key, first.get(key));
-        }
+        // remove _$body from super property to prevent from sending invalid _$body
+        superProps.remove(ShuttleProtocol.FIELD_NAME_BODY);
 
-        /* copy second */
-        iter = second.keys();
-
-        while(iter.hasNext()) {
-            String key = iter.next();
-            properties.put(key, second.get(key));
-        }
+        // !important: must be ordered 'shuttleProps', 'superProps', 'defaultProps'
+        copyProperties(shuttleProps, properties, true);
+        copyProperties(superProps, properties, false);
+        copyProperties(defaultProps, properties, true);
 
         return properties;
+    }
+
+    static private void copyProperties(JSONObject from, JSONObject to, boolean overwrite)
+            throws JSONException {
+        Iterator<String> iter = from.keys();
+        while(iter.hasNext()) {
+            String key = iter.next();
+
+            // JSONObject.NULL 일 경우 테스트
+            if (!overwrite && to.has(key)) continue;
+
+            to.put(key, from.get(key));
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.skp.di.rake.client.api.impl;
+package com.skp.di.rake.client.core;
 
 import com.skp.di.rake.client.api.Rake;
 import com.skp.di.rake.client.api.RakeUserConfig;

@@ -89,6 +89,4 @@ public class RakeProtocolSpec {
 
         assertNotEquals(json1, json2);
     }
-
-
 }
