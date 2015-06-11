@@ -18,6 +18,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,11 +54,11 @@ public class RakeCoreSpec {
 
         devCore  = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(null), devConfig);
         devObserver = mock(Observer.class);
-        devCore.subscribeOnTest(devObserver);
+        devCore.subscribe(AndroidSchedulers.mainThread(), devObserver);
 
         liveCore = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(null), liveConfig);
         liveObserver = mock(Observer.class);
-        liveCore.subscribeOnTest(liveObserver);
+        liveCore.subscribe(AndroidSchedulers.mainThread(), liveObserver);
     }
 
     @Test

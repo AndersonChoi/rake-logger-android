@@ -2,6 +2,7 @@ package com.skp.di.rake.client.protocol;
 
 import android.util.Base64;
 
+import com.skp.di.rake.client.utils.Logger;
 import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.HttpEntity;
@@ -52,7 +53,4 @@ public class RakeProtocol {
 
         return new StringEntity(body.toString());
     }
-
-
-
 }

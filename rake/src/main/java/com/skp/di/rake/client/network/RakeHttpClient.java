@@ -197,7 +197,6 @@ public class RakeHttpClient {
         return new DefaultHttpClient(params);
     }
 
-
     private HttpClient createHttpsClient() throws GeneralSecurityException, IOException {
         HttpParams params = createHttpParams();
 
@@ -206,7 +205,6 @@ public class RakeHttpClient {
 
         SSLSocketFactory sslSocketFactory = new RakeSSLSocketFactory(store);
         sslSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
 
         Scheme http = new Scheme("http", PlainSocketFactory.getSocketFactory(), 80);
         Scheme https = new Scheme("https", sslSocketFactory, 80);

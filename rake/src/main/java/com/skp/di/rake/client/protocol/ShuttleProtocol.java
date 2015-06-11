@@ -21,7 +21,7 @@ public class ShuttleProtocol {
             throws JSONException {
         JSONObject trackableShuttle = extractSentinelMeta(shuttle);
         JSONObject userProperties   = extractProperties(shuttle);
-        JSONObject properties = mergeProperties(defaultProperties /* to */, userProperties);
+        JSONObject properties = mergeProperties(userProperties, defaultProperties);
 
         trackableShuttle.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
 
@@ -74,7 +74,6 @@ public class ShuttleProtocol {
             String key = iter.next();
             properties.put(key, first.get(key));
         }
-
 
         /* copy second */
         iter = second.keys();

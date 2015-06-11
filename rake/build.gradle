@@ -45,7 +45,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'org.json:json:20141113'
     compile 'io.reactivex:rxjava:1.0.11'
-    compile 'io.reactivex:rxandroid:0.24.0'
 
     testCompile fileTree(dir: 'src/test/libs', include: ['*.jar'])
     testCompile 'org.robolectric:robolectric:3.0-rc3'
@@ -53,12 +52,13 @@ dependencies {
     testCompile 'org.mockito:mockito-all:1.10.19'
     testCompile 'com.squareup.okhttp:mockwebserver:2.3.0'
     testCompile 'commons-io:commons-io:2.4'
+    testCompile'io.reactivex:rxandroid:0.24.0'
 }
 
-def configFilePath = project.buildscript.sourceFile.parent +
-        "/src/main/java/com/skp/di/rake/client/config/RakeMetaConfig.java"
 
 //task updateRakeVersion(type: Copy) {
+// String configFilePath = project.buildscript.sourceFile.parent +
+//        "/src/main/java/com/skp/di/rake/client/config/RakeMetaConfig.java"
 //
 //    String pattern = ~/"android_(.)*"/
 //    String newVersion = "\"android_${version}\""
@@ -82,6 +82,7 @@ def configFilePath = project.buildscript.sourceFile.parent +
 build.doLast {
     String releaseJarName = "${archivesBaseName}-${version}.jar"
     String releaseDir = "release/"
+    String appLibsDir = "../app/libs"
 
     // extract jar from aar, then copy it into 'release' dir
     // ref: https://github.com/urbanairship/ua-unity-plugin/blob/79b997a24fce24eff965e6c905b68d36758ebe96/android-plugin/build.gradle#L77
@@ -95,8 +96,8 @@ build.doLast {
 
     copy {
         from releaseDir
-        into releaseDir
-        rename releaseJarName, "rake-android-current.jar"
+        into appLibsDir
+        rename releaseJarName, "rake-android-current-SNAPSHOT.jar"
     }
 }
 

@@ -16,7 +16,6 @@ import rx.Observable;
 import rx.Observer;
 import rx.Scheduler;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
@@ -76,11 +75,6 @@ public class RakeCore {
                     if (config.getWillPrintDebugInfo())
                         Logger.i("Network Thread: " + Thread.currentThread().getName());
                     return client.send(Arrays.asList(json));
-                })
-                .onErrorReturn(t -> {
-                    // TODO: onErrorReturn
-                    Logger.e("exception occurred in RakeCore", t);
-                    return null;
                 });
     }
 
@@ -89,21 +83,20 @@ public class RakeCore {
                 .observeOn(scheduler)
                 .map(json -> {
                     dao.add(json);
+                    if (config.getWillPrintDebugInfo()
+                            && dao.getCount() == config.getMaxLogTrackCount())
+                        Logger.i("Rake is full. Auto-flushed");
+
                     return dao.getCount();
                 }).filter(count -> count == config.getMaxLogTrackCount())
                 .mergeWith(timer.mergeWith(flushable))
                 .map(flushCommanded -> {
                     List<JSONObject> tracked = dao.clear();
                     return client.send(tracked); /* return response. it might be null */
-                }).filter(responseBody -> null != responseBody)
-                .onErrorReturn(t -> {
-                    // TODO: onErrorReturn
-                    Logger.e("exception occurred in RakeCore", t);
-                    return null;
-                });
+                }).filter(responseBody -> null != responseBody);
     }
 
-    private Subscription subscribe(Scheduler scheduler, Observer<String> observer) {
+    public Subscription subscribe(Scheduler scheduler, Observer<String> observer) {
         if (null != subscription) subscription.unsubscribe();
 
         // if mode is dev, then worker has no timer, and are not flushable
@@ -113,6 +106,11 @@ public class RakeCore {
             worker = buildLiveWorker(scheduler);
 
         return worker
+                .onErrorReturn(t -> {
+                    // TODO: onErrorReturn
+                    Logger.e("exception occurred in RakeCore", t);
+                    return null;
+                })
                 .subscribeOn(scheduler)
                 .subscribe(observer);
     }
@@ -123,11 +121,6 @@ public class RakeCore {
 
     public void flush() {
         flushable.onNext(null);
-    }
-
-    /* the fields, methods below are used only for testing */
-    public void subscribeOnTest(Observer<String> observer) {
-        subscription = subscribe(AndroidSchedulers.mainThread(), observer);
     }
 
     public int getLogCount() { return dao.getCount(); }
