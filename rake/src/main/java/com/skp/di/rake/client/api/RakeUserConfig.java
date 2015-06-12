@@ -8,7 +8,7 @@ public abstract class RakeUserConfig {
     abstract public String provideLiveToken();
     abstract public int provideFlushIntervalAsSecond();
     abstract public int provideMaxLogTrackCount();
-    abstract public boolean provideWillPrintDebugInfo();
+    abstract public boolean printDebugInfo();
 
     /* wrapping functions for readability */
     public final RUNNING_ENV getRunningMode() { return provideRunningMode(); }
@@ -16,7 +16,7 @@ public abstract class RakeUserConfig {
     public final String getLiveToken() { return provideLiveToken();   }
     public int getFlushInterval() { return provideFlushIntervalAsSecond(); }
     public int getMaxLogTrackCount() { return provideMaxLogTrackCount(); }
-    public boolean printDebugInfo() { return provideWillPrintDebugInfo(); };
+    public boolean getPrintInfoFlag() { return printDebugInfo(); };
 
     public final String getToken() {
         if (provideRunningMode() == RUNNING_ENV.DEV) return provideDevToken();

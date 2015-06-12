@@ -1,16 +1,20 @@
 package com.skp.di.rake.client.api;
 
+import android.util.Log;
+
 import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.core.RakeCore;
 import com.skp.di.rake.client.mock.MockSystemInformation;
 import com.skp.di.rake.client.mock.SampleDevConfig2;
 import com.skp.di.rake.client.protocol.ShuttleProtocol;
+import com.skp.di.rake.client.utils.RakeLogger;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -138,39 +142,6 @@ public class RakeSpec {
     }
 
     @Test
-    public void test_DefaultProperty_ShouldNotOverwritten_By_Shuttle_And_SuperProperty() throws JSONException {
-        rake.track(shuttle.toJSONObject());
-
-        // if defaultProperties are overwritten by the shuttle,
-        // local_time field will be "" (empty string)
-        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
-        assertNotEquals("", properties.getString("local_time"));
-
-        // defaultProperties should not be overwritten by shuttle property, super property
-        assertNotEquals("invalid local time", properties.getString("local_time"));
-        assertNotEquals("", properties.getString("local_time"));
-    }
-
-    @Test
-    public void test_SuperProperty_ShouldBeAdded_And_ShouldBeOverwritten_ByDefaultProperty()
-            throws JSONException {
-        JSONObject props = new JSONObject();
-        props.put("session_id", "AED49-KA4");
-        props.put("local_time", "invalid local time");
-
-        rake.registerSuperProperties(props);
-        rake.track(shuttle.toJSONObject());
-
-        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
-
-        // verify super property properly added {"session_id": "AED49-KA4"}
-        assertEquals("AED49-KA4", properties.getString("session_id"));
-
-        // verify super property is overwritten by default properties
-        assertNotEquals("invalid local time", properties.getString("local_time"));
-    }
-
-    @Test
     public void test_$body_ShouldRemovedFrom_SuperProperty() throws JSONException {
         // _$body field included in super property by used should be removed before merged
         JSONObject props = new JSONObject();
@@ -185,6 +156,89 @@ public class RakeSpec {
         assertNotEquals("invalid body", properties.get(ShuttleProtocol.FIELD_NAME_BODY));
     }
 
+    @Test
+    public void test_SuperProperty_ShouldOverwrite_ShuttleBody_WhichIsNotSet() throws JSONException {
+        // field2 is not set
+        shuttle.field4("");
+
+        JSONObject props = new JSONObject();
+        props.put("field2", "super prop field2");
+
+        registerSuperPropsAndTrack(props, rake, shuttle.toJSONObject());
+
+        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
+
+        Log.i("TEST", properties.toString());
+
+        JSONObject _$body = properties.getJSONObject(ShuttleProtocol.FIELD_NAME_BODY);
+
+        assertEquals("super prop field2", _$body.getString("field2"));
+    }
+
+    @Test
+    public void test_SuperProperty_ShouldOverwrite_ShuttleBody_WhichIsEmptyString() throws JSONException {
+        shuttle.setBodyOfaction2("", "field4 body value");
+
+        JSONObject props = new JSONObject();
+        props.put("field2", "super prop field2");
+
+        registerSuperPropsAndTrack(props, rake, shuttle.toJSONObject());
+
+        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
+        JSONObject _$body = properties.getJSONObject(ShuttleProtocol.FIELD_NAME_BODY);
+
+        assertEquals("super prop field2", _$body.getString("field2"));
+    }
+
+    @Test
+    public void test_SuperProperty_ShouldNotOverwrite_ShuttleBody_WhichIsNotEmpty() throws JSONException {
+        shuttle.setBodyOfaction2("", "field4 body value");
+
+        JSONObject props = new JSONObject();
+        props.put("field4", "should not be sent");
+
+        registerSuperPropsAndTrack(props, rake, shuttle.toJSONObject());
+
+        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
+        JSONObject _$body = properties.getJSONObject(ShuttleProtocol.FIELD_NAME_BODY);
+
+        assertEquals("field4 body value", _$body.getString("field4"));
+    }
+
+    @Test
+    public void test_SuperProperty_ShouldOverwrite_ShuttleHeader_WhichIsEmpty() throws JSONException {
+        String header1 = "header1 super prop value";
+
+        registerSuperPropsAndTrack("header1", header1, rake, shuttle.toJSONObject());
+        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
+
+        assertEquals(header1, properties.getString("header1"));
+    }
+
+    @Test
+    public void test_SuperProperty_ShouldNotOverwrite_ShuttleHeader_WhichIsNotEmpty() throws JSONException {
+        JSONObject props = new JSONObject();
+        props.put("log_version", "invalid log version"); // default header property
+        props.put("header1", "invalid header1 value");   // custom  header property
+
+        shuttle.header1("valid header1 value");
+        registerSuperPropsAndTrack(props, rake, shuttle.toJSONObject());
+
+        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
+
+        String log_version = shuttle.toJSONObject().getString("log_version");
+        assertEquals(log_version, properties.getString("log_version")); // when header is not empty
+        assertEquals("valid header1 value", properties.getString("header1"));
+    }
+
+    @Test
+    public void test_DefaultProperty_ShouldOverwrite_Always() throws JSONException {
+        registerSuperPropsAndTrack("token", "invalid token", rake, shuttle.toJSONObject());
+
+        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
+        assertEquals(config.getToken(), properties.getString("token")); // when header is empty
+    }
+
     private JSONObject getPropertiesFromCaptor(RakeCore mock, ArgumentCaptor<JSONObject> captor) throws JSONException {
         verify(mockCore, times(1)).track(captor.capture());
         JSONObject trackable = captor.getValue();
@@ -192,35 +246,17 @@ public class RakeSpec {
         return properties;
     }
 
-    @Test
-    public void test_ShuttleProperty_ShouldBeAdded() throws JSONException {
+    private void registerSuperPropsAndTrack(String key, String value, Rake rake, JSONObject shuttle) throws JSONException {
+        rake.clearSuperProperties();
         JSONObject props = new JSONObject();
-        props.put("session_id", "4919");
-        rake.registerSuperProperties(props);
+        props.put(key, value);
 
-        shuttle.field1("field1 value");
-        rake.track(shuttle.toJSONObject());
-
-        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
-
-        assertEquals("4919", properties.get("session_id"));
-
-        JSONObject _$body = properties.getJSONObject(ShuttleProtocol.FIELD_NAME_BODY);
-        assertEquals("field1 value", _$body.get("field1"));
+        registerSuperPropsAndTrack(props, rake, shuttle);
     }
 
-    @Test
-    public void test_ShuttleProperty_ShouldNotBeOverwritten_BySuperProperty() throws JSONException {
-        String log_version = shuttle.toJSONObject().getString("log_version");
-
-        JSONObject props = new JSONObject();
-        props.put("log_version", "invalid log version");
+    private void registerSuperPropsAndTrack(JSONObject props, Rake rake, JSONObject shuttle) throws JSONException {
         rake.registerSuperProperties(props);
-
-        rake.track(shuttle.toJSONObject());
-
-        JSONObject properties = getPropertiesFromCaptor(mockCore, captor);
-
-        assertEquals(log_version, properties.getString("log_version"));
+        rake.track(shuttle);
     }
+
 }

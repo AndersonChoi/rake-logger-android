@@ -29,7 +29,7 @@ public class SampleLiveConfig extends RakeUserConfig {
     }
 
     @Override
-    public boolean provideWillPrintDebugInfo() {
+    public boolean printDebugInfo() {
         return false;
     }
 }

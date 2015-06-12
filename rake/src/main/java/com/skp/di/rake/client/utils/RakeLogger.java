@@ -26,7 +26,7 @@ public class RakeLogger {
     /* print log only in dev */
     public void i(String message) {
         if (null == message) return;
-        if (!config.printDebugInfo()) return;
+        if (!config.getPrintInfoFlag()) return;
 
         Log.i(TAG, message);
     }

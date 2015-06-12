@@ -1,5 +1,7 @@
 package com.skp.di.rake.client.protocol;
 
+import com.skp.di.rake.client.utils.RakeLogger;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,12 +24,12 @@ public class ShuttleProtocol {
                                           JSONObject superProps,
                                           JSONObject defaultProps) throws JSONException {
 
-        JSONObject trackable = extractSentinelMeta(shuttle);
-        JSONObject shuttleProps   = extractProperties(shuttle);
+        JSONObject trackable    = extractSentinelMeta(shuttle);
+        JSONObject shuttleProps = extractProperties(shuttle);
 
         // must be in order 'shuttleProps, superProps, defaultProps'
         // precedence: superProps < shuttleProps < defaultProps
-        JSONObject properties = mergeProperties(shuttleProps, superProps, defaultProps);
+        JSONObject properties = mergeProperties(shuttleProps, superProps, defaultProps, trackable);
 
         trackable.put(ShuttleProtocol.FIELD_NAME_PROPERTIES, properties);
 
@@ -35,7 +37,7 @@ public class ShuttleProtocol {
     }
 
     static private JSONObject extractSentinelMeta(JSONObject shuttle) throws JSONException {
-        JSONObject willBeTracked = new JSONObject();
+        JSONObject trackable = new JSONObject();
 
         // extract `sentinel_meta`
         JSONObject sentinel_meta = shuttle.getJSONObject(ShuttleProtocol.FIELD_NAME_SENTINEL_META);
@@ -45,12 +47,12 @@ public class ShuttleProtocol {
         String _$schemaId = sentinel_meta.getString(ShuttleProtocol.FIELD_NAME_SCHEMA_ID);
 
         // fill
-        willBeTracked.put(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS, _$encryptionFields);
-        willBeTracked.put(ShuttleProtocol.FIELD_NAME_PROJECT_ID, _$projectId);
-        willBeTracked.put(ShuttleProtocol.FIELD_NAME_FIELD_ORDER, _$fieldOrder);
-        willBeTracked.put(ShuttleProtocol.FIELD_NAME_SCHEMA_ID, _$schemaId);
+        trackable.put(ShuttleProtocol.FIELD_NAME_ENCRYPTION_FIELDS, _$encryptionFields);
+        trackable.put(ShuttleProtocol.FIELD_NAME_PROJECT_ID, _$projectId);
+        trackable.put(ShuttleProtocol.FIELD_NAME_FIELD_ORDER, _$fieldOrder);
+        trackable.put(ShuttleProtocol.FIELD_NAME_SCHEMA_ID, _$schemaId);
 
-        return willBeTracked;
+        return trackable;
     }
 
     static private JSONObject extractProperties(JSONObject shuttle) throws JSONException {
@@ -69,11 +71,11 @@ public class ShuttleProtocol {
         return properties;
     }
 
-
     /* shuttle property means that the property a user inserted using a shuttle */
     static private JSONObject mergeProperties(JSONObject shuttleProps,
                                               JSONObject superProps,
-                                              JSONObject defaultProps)
+                                              JSONObject defaultProps,
+                                              JSONObject trackable)
             throws JSONException {
 
         JSONObject properties = new JSONObject();
@@ -83,22 +85,57 @@ public class ShuttleProtocol {
 
         // !important: must be ordered 'shuttleProps', 'superProps', 'defaultProps'
         copyProperties(shuttleProps, properties, true);
-        copyProperties(superProps, properties, false);
+//        copyProperties(superProps, properties, false);
+        copySuperProperties(superProps, properties, trackable);
         copyProperties(defaultProps, properties, true);
 
         return properties;
     }
 
-    static private void copyProperties(JSONObject from, JSONObject to, boolean overwrite)
-            throws JSONException {
+    static private void copyProperties(JSONObject from,
+                                       JSONObject to,
+                                       boolean overwrite) throws JSONException {
+
         Iterator<String> iter = from.keys();
         while(iter.hasNext()) {
             String key = iter.next();
 
-            // JSONObject.NULL 일 경우 테스트
-            if (!overwrite && to.has(key)) continue;
+            /* not overwrite when `to.get(key)` is not empty */
+            if (!overwrite && to.has(key) && !to.getString(key).isEmpty())
+                continue;
 
             to.put(key, from.get(key));
+        }
+    }
+
+    static private void copySuperProperties(JSONObject superProps, JSONObject props, JSONObject trackable) throws JSONException {
+         // _$fieldOrder could be null if a user does not use shuttle (legacy)
+        JSONObject _$fieldOrder = null;
+
+        try {
+            _$fieldOrder = trackable.getJSONObject(ShuttleProtocol.FIELD_NAME_FIELD_ORDER);
+        } catch (JSONException e) { /* do nothing */ }
+
+        Iterator<String> iter = superProps.keys();
+        while(iter.hasNext()) {
+            String key = iter.next();
+
+            if (null != _$fieldOrder && !_$fieldOrder.has(key)) { /* body */
+                JSONObject _$body = props.getJSONObject(ShuttleProtocol.FIELD_NAME_BODY);
+
+                /* if the body field is not empty, do not overwrite */
+                if (_$body.has(key) && (!_$body.getString(key).isEmpty())) continue;
+
+                /* since _$body is mutable object, we don't need to put it back into props */
+                _$body.put(key, superProps.get(key));
+
+            } else /* header or might be not shuttle */ {
+
+                /* if the header field is not empty, do not overwrite */
+                if (props.has(key) && (!props.getString(key).isEmpty())) continue;
+
+                props.put(key, superProps.get(key));
+            }
         }
     }
 }

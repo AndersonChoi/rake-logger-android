@@ -24,7 +24,7 @@ public class SampleDevConfig2 extends RakeUserConfig {
     }
 
     @Override
-    public boolean provideWillPrintDebugInfo() {
+    public boolean printDebugInfo() {
         return false;
     }
 }

@@ -31,10 +31,12 @@ public class Rake {
         legacySupport(context, config);
     }
 
-
+    // no synchronized needed. since caller doesn't care consistency thanks to Um.
     public void track(JSONObject shuttle) {
         if (null == shuttle) return;
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
+
+        debugLogger.i("`track` called, inserted shuttle: \n" + shuttle.toString());
 
         JSONObject trackable = null;
 
@@ -43,18 +45,22 @@ public class Rake {
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackable = ShuttleProtocol.getTrackable(shuttle, superProperties, defaultProperties);
 
-            debugLogger.i("Tracked Shuttle: \n" + trackable.toString());
+            debugLogger.i("Tracked: \n" + trackable.toString());
 
         } catch (JSONException e) {
             RakeLogger.e("Can't build trackable", e);
         } catch (Exception e) {
-            RakeLogger.e("Can't build trackable", e);
+            RakeLogger.e("Can't build trackable. Due to invalid shuttle", e);
         }
 
         if (null != trackable) core.track(trackable);
     }
 
-    public void flush() { core.flush(); }
+    public void flush() {
+
+        debugLogger.i("flush called");
+        core.flush();
+    }
 
 
 
@@ -101,10 +107,12 @@ public class Rake {
     }
 
     public void registerSuperProperties(JSONObject superProperties) {
+        debugLogger.i("add super-properties: \n" + superProperties);
         addSuperProperties(superProperties, false);
     }
 
     public void registerSuperPropertiesOnce(JSONObject superProperties) {
+        debugLogger.i("add super-properties once: \n" + superProperties);
         addSuperProperties(superProperties, true);
     }
 
@@ -125,6 +133,7 @@ public class Rake {
             }
         }
 
+        debugLogger.i("total super-properties: \n" + this.superProperties);
         savePrefenrences();
     }
 
@@ -133,6 +142,8 @@ public class Rake {
             this.superProperties.remove(superPropertyName);
         }
 
+        debugLogger.i("unregister super-property: " + superPropertyName);
+        debugLogger.i("total super-properties: \n" + this.superProperties);
         savePrefenrences();
     }
 
@@ -141,6 +152,7 @@ public class Rake {
             this.superProperties = new JSONObject();
         }
 
+        debugLogger.i("clear all super-properties, now super-properties: \n" + this.superProperties);
         clearPreferences();
     }
 
@@ -156,13 +168,17 @@ public class Rake {
     private void readPreferences() {
         String props = sharedPref.getString("super_properties", "{}");
 
-        try {
-            superProperties = new JSONObject(props);
-        } catch (JSONException e) {
-            RakeLogger.e("Cannot parse stored superProperties", e);
-            superProperties = new JSONObject();
-            clearPreferences();
+        synchronized (this.superProperties) {
+            try {
+                superProperties = new JSONObject(props);
+            } catch (JSONException e) {
+                RakeLogger.e("Cannot parse stored superProperties", e);
+                superProperties = new JSONObject();
+                clearPreferences();
+            }
         }
+
+        debugLogger.i("read super-properties from SharedPref, now super-properties: \n" + this.superProperties);
     }
 
     private void savePrefenrences() {

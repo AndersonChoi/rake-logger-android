@@ -75,7 +75,7 @@ public class RakeCore {
         return  trackable
                 .observeOn(scheduler)
                 .map(json -> {
-                    debugLogger.i("Network Thread: " + Thread.currentThread().getName());
+                    debugLogger.i("Backround Thread: " + Thread.currentThread().getName());
                     return client.send(Arrays.asList(json));
                 });
     }
@@ -109,7 +109,7 @@ public class RakeCore {
         return worker
                 .onErrorReturn(t -> {
                     // TODO: onErrorReturn
-                    RakeLogger.e("exception occurred in RakeCore", t);
+                    RakeLogger.e("exception occurred. onErrorReturn", t);
                     return null;
                 })
                 .subscribeOn(scheduler)
