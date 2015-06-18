@@ -63,20 +63,17 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void testTrackShouldIncreaseLogCount() throws InterruptedException {
+    public void testLiveCoreShouldNotFlush() throws InterruptedException {
         for (int i = 0; i < count - 1; i++) liveCore.track(log);
 
-        assertEquals(count - 1, liveCore.getLogCount());
     }
 
     @Test
     public void testFlush() {
         liveCore.track(log);
-        assertEquals(1, liveCore.getLogCount());
+        verify(liveObserver, never()).onNext(any());
 
         liveCore.flush();
-        assertEquals(0, liveCore.getLogCount());
-
         verify(liveObserver, times(1)).onNext(any());
         verify(liveObserver, never()).onError(any());
     }
@@ -85,15 +82,12 @@ public class RakeCoreSpec {
     public void testAutoFlush() {
         for (int i = 0; i < count; i++) liveCore.track(log);
 
-        assertEquals(0, liveCore.getLogCount());
         verify(liveObserver, times(1)).onNext(any());
         verify(liveObserver, never()).onError(any());
     }
 
     @Test
     public void testShouldNotFlushWhenEmpty() {
-        assertEquals(0, liveCore.getLogCount());
-
         liveCore.flush();
 
         verify(liveObserver, never()).onNext(any());
@@ -102,8 +96,6 @@ public class RakeCoreSpec {
 
     @Test
     public void testCoreWithDevConfigShouldFlushWhenTrackCalled() {
-        assertEquals(0, devCore.getLogCount());
-
         devCore.track(log);
 
         verify(devObserver, times(1)).onNext(any());

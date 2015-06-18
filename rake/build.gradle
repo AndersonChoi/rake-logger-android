@@ -31,6 +31,10 @@ android {
         minSdkVersion 9
         targetSdkVersion 21
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 retrolambda {

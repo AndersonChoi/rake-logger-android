@@ -42,9 +42,9 @@ public class RakeCore {
 
         this.timer = Observable
                 .interval(config.getFlushInterval() ,TimeUnit.SECONDS)
-                .startWith(-1L)
+                .startWith(-1L) /* flush when app starts */
                 .map(x -> {
-                    debugLogger.i("Timer Fired");
+                    debugLogger.i("Timer fired");
                     return null;
                 });
 
@@ -82,17 +82,20 @@ public class RakeCore {
 
     private Observable<String> buildLiveWorker(Scheduler scheduler) {
         return trackable
-                .observeOn(scheduler)
                 .map(json -> {
-                    dao.add(json);
-                    if (dao.getCount() == config.getMaxLogTrackCount())
+                    int count = dao.add(json);
+
+                    if (count == config.getMaxLogTrackCount())
                         debugLogger.i("Rake is full. Auto-flushed");
 
-                    return dao.getCount();
+                    return count;
                 }).filter(count -> count == config.getMaxLogTrackCount())
                 .mergeWith(timer.mergeWith(flushable))
+                .observeOn(scheduler)
                 .map(flushCommanded -> {
-                    List<JSONObject> tracked = dao.clear();
+                    List<JSONObject> tracked = dao.getAndRemoveOldest(config.getMaxLogTrackCount());
+                    debugLogger.i("Tracked log count: " + tracked.size());
+
                     return client.send(tracked); /* return response. it might be null */
                 }).filter(responseBody -> null != responseBody);
     }
@@ -112,7 +115,6 @@ public class RakeCore {
                     RakeLogger.e("exception occurred. onErrorReturn", t);
                     return null;
                 })
-                .subscribeOn(scheduler)
                 .subscribe(observer);
     }
 
@@ -123,6 +125,4 @@ public class RakeCore {
     public void flush() {
         flushable.onNext(null);
     }
-
-    public int getLogCount() { return dao.getCount(); }
 }

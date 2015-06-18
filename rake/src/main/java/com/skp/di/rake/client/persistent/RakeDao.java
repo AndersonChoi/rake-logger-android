@@ -6,12 +6,9 @@ import java.util.List;
 
 public interface RakeDao {
 
-    void add(JSONObject log);
-    List<JSONObject> clear();
+    int add(JSONObject log);
+    List<JSONObject> getAndRemoveOldest(int N);
+    int add(List<JSONObject> logList);
     int getCount();
-
-    // TODO
-    void add(List<JSONObject> logList);
-    JSONObject pop();
-    List<JSONObject> pop(int count);
+    void clear();
 }

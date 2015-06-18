@@ -93,48 +93,7 @@ public class RxJavaSpec2 {
         verify(observer, times(2)).onNext(any());
     }
 
-    @Test
-    public void testApiDesign() {
-        Observable<Integer> shouldBeFlushed =
-                trackable.map(log -> {
-                    dao.add(log);
-                    return dao.getCount();
-                })
-                .filter(count -> count == MAX_SAVE_COUNT)
-                .mergeWith(flushCommanded)
-                .map(x -> {
-                    List<JSONObject> list = null;
-                    if (dao.getCount() > 0) {
-                        list = dao.clear();
-                        // HTTP action required
-                    }
 
-
-                    return (null == list) ? 0 : list.size();
-                });
-
-        // make a subscription
-        Observer<Integer> observer = mock(Observer.class);
-
-        shouldBeFlushed.subscribe(observer);
-
-        // track 3 logs, then flush
-        trackable1.onNext(new JSONObject());
-        trackable2.onNext(new JSONObject());
-        trackable2.onNext(new JSONObject());
-
-        // verify
-        verify(observer, times(1)).onNext(3);
-        assertEquals(0, dao.getCount());
-
-        // track 2 logs, then flush
-        trackable1.onNext(new JSONObject());
-        trackable2.onNext(new JSONObject());
-        assertEquals(2, dao.getCount());
-        flushable.onNext(null);
-        verify(observer, times(1)).onNext(2);
-        assertEquals(0, dao.getCount());
-    }
 
     @Test
     public void testWhenTrackableAdded() {

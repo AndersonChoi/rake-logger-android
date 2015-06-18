@@ -36,12 +36,9 @@ public class Rake {
         if (null == shuttle) return;
         if (shuttle.toString().equals("{\"\":\"\"}")) return;
 
-        debugLogger.i("`track` called, inserted shuttle: \n" + shuttle.toString());
-
         JSONObject trackable = null;
 
         try {
-            // TODO sync with this.sysInfo?
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackable = ShuttleProtocol.getTrackable(shuttle, superProperties, defaultProperties);
 
@@ -57,7 +54,6 @@ public class Rake {
     }
 
     public void flush() {
-
         debugLogger.i("flush called");
         core.flush();
     }
