@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">RakeApp</string>
-
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <string name="btnFlush">Flush</string>
+    <string name="btnTrack">Track</string>
+    <string name="btnRegisterSuperProperty">Register Super-Property</string>
+    <string name="btnClearSuperProperty">Clear Super-Property</string>
+
 </resources>

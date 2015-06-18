@@ -1,4 +1,4 @@
-package com.skp.di.rake.client.app;
+package com.skp.di.rake.client.testApp;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
