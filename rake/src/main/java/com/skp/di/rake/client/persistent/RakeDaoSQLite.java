@@ -33,12 +33,15 @@ public class RakeDaoSQLite implements RakeDao {
     public static final String KEY_DATA = "data";
     public static final String KEY_CREATED_AT = "created_at";
 
-    private static final String CREATE_EVENTS_TABLE =
-            "CREATE TABLE " + Table.EVENTS.getName() + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+    public static final String QUERY_CREATE_EVENTS_TABLE =
+            "CREATE TABLE " + Table.EVENTS.getName() +
+                    " (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     KEY_DATA + " STRING NOT NULL, " +
                     KEY_CREATED_AT + " INTEGER NOT NULL);";
-    private static final String EVENTS_TIME_INDEX =
-            "CREATE INDEX IF NOT EXISTS time_idx ON " + Table.EVENTS.getName() +
+
+    public static final String QUERY_EVENTS_TIME_INDEX =
+            "CREATE INDEX IF NOT EXISTS time_idx ON " +
+                    Table.EVENTS.getName() +
                     " (" + KEY_CREATED_AT + ");";
 
     public enum Table {
@@ -48,7 +51,7 @@ public class RakeDaoSQLite implements RakeDao {
         private final String tableName;
     }
 
-    private static final Table RAKE_LOG_TABLE = Table.EVENTS;
+    public static final Table RAKE_LOG_TABLE = Table.EVENTS;
 
     /* member variables */
     private final RakeDatabaseHelper dbHelper;
@@ -58,56 +61,7 @@ public class RakeDaoSQLite implements RakeDao {
     public RakeDaoSQLite(RakeUserConfig config, Context context) {
         this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
         debugLogger.i("Rake Database '" + DATABASE_NAME + "' constructed.");
-        dbHelper = new RakeDatabaseHelper(config, context, DATABASE_NAME);
-    }
-
-    // constructor for test using database name `null`. (in-memory sqlite)
-    public RakeDaoSQLite(RakeUserConfig config, Context context, String databaseName) {
-        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
-        debugLogger.i("Rake Database '" + DATABASE_NAME + "' constructed.");
-        dbHelper = new RakeDatabaseHelper(config, context, databaseName);
-    }
-
-    private static class RakeDatabaseHelper extends SQLiteOpenHelper {
-
-        /* member variables */
-        private File databaseFile;
-        private RakeLogger debugLogger;
-
-        /* constructor */
-        RakeDatabaseHelper(RakeUserConfig config, Context context, String databaseName) {
-            super(context, databaseName, null, DATABASE_VERSION);
-
-            if (null != databaseName)
-                databaseFile = context.getDatabasePath(databaseName);
-
-            debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
-        }
-
-        /**
-         * Completely deletes the DB file from the file system.
-         */
-        public void dropDatabase() {
-            close();
-            databaseFile.delete();
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            debugLogger.i("Creating a new Rake Database");
-
-            db.execSQL(CREATE_EVENTS_TABLE);
-            db.execSQL(EVENTS_TIME_INDEX);
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            debugLogger.i("Upgrading base, drop and creating new table [" + Table.EVENTS.getName() + "]");
-
-            db.execSQL("DROP TABLE IF EXISTS " + Table.EVENTS.getName());
-            db.execSQL(CREATE_EVENTS_TABLE);
-            db.execSQL(EVENTS_TIME_INDEX);
-        }
+        dbHelper = new RakeDatabaseHelper(config, context, DATABASE_NAME, DATABASE_VERSION);
     }
 
     /* methods */
