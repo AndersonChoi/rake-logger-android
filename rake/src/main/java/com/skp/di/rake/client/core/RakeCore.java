@@ -75,14 +75,17 @@ public class RakeCore {
         return  trackable
                 .observeOn(scheduler)
                 .map(json -> {
-                    debugLogger.i("Backround Thread: " + Thread.currentThread().getName());
+                    debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
                     return client.send(Arrays.asList(json));
                 });
     }
 
     private Observable<String> buildLiveWorker(Scheduler scheduler) {
         return trackable
+                .observeOn(scheduler)
                 .map(json -> {
+                    debugLogger.i("Persisting Thread: " + Thread.currentThread().getName());
+
                     int count = dao.add(json);
 
                     if (count == config.getMaxLogTrackCount())
@@ -94,7 +97,8 @@ public class RakeCore {
                 .observeOn(scheduler)
                 .map(flushCommanded -> {
                     List<JSONObject> tracked = dao.getAndRemoveOldest(config.getMaxLogTrackCount());
-                    debugLogger.i("Tracked log count: " + tracked.size());
+                    debugLogger.i("Total log count: " + tracked.size());
+                    debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
 
                     return client.send(tracked); /* return response. it might be null */
                 }).filter(responseBody -> null != responseBody);
