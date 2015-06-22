@@ -42,10 +42,16 @@ android {
 }
 
 retrolambda {
-    jdk System.getenv("JAVA8_HOME")
-    oldJdk System.getenv("JAVA6_HOME")
+    String JAVA_HOME  = '/Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home'
+    String JAVA6_HOME = '/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home'
+    String JAVA7_HOME = '/Library/Java/JavaVirtualMachines/jdk1.7.0_80.jdk/Contents/Home'
+    String JAVA8_HOME = '/Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home'
+
+    jdk JAVA8_HOME
+    oldJdk JAVA6_HOME
     javaVersion JavaVersion.VERSION_1_6
-    jvmArgs '-noverify'
+    defaultMethods false
+    incremental true
 }
 
 dependencies {
