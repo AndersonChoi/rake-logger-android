@@ -1,7 +1,16 @@
 package com.skp.di.rake.client.protocol;
 
+import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
+import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
+import com.skp.di.rake.client.protocol.exception.InvalidEndPointException;
+import com.skp.di.rake.client.protocol.exception.InvalidJsonSyntaxException;
+import com.skp.di.rake.client.protocol.exception.NotRegisteredRakeTokenException;
+import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
+import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
+import com.skp.di.rake.client.utils.RakeLogger;
 import com.skp.di.rake.client.utils.StringUtils;
 
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.entity.StringEntity;
@@ -48,4 +57,74 @@ public class RakeProtocol {
 
         return new StringEntity(body.toString());
     }
+
+    static public void verifyStatusCode(int statusCode) throws
+            RakeProtocolBrokenException,
+            InvalidEndPointException,
+            InternalServerErrorException {
+
+            switch(statusCode) {
+                case HttpStatus.SC_NOT_FOUND:
+                    throw new InvalidEndPointException("");
+                case HttpStatus.SC_INTERNAL_SERVER_ERROR:
+                    throw new InternalServerErrorException("");
+                default: break; /* pass through */
+            }
+    }
+
+    static public String verifyErrorCode(String responseBody) throws
+            InsufficientJsonFieldException,
+            InvalidJsonSyntaxException,
+            NotRegisteredRakeTokenException,
+            WrongRakeTokenUsageException {
+
+        JSONObject response = null;
+        int errorCode = 0;
+
+        try {
+            response = new JSONObject(responseBody);
+            errorCode = response.getInt("errorCode");
+        } catch (JSONException e) {
+            throw new RakeProtocolBrokenException(e);
+        }
+
+        switch(errorCode) {
+            case RakeProtocol.ERROR_CODE_OK: /* pass through */
+                break;
+            case RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD:
+                throw new InsufficientJsonFieldException(responseBody);
+            case RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX:
+                throw new InvalidJsonSyntaxException(responseBody);
+            case RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN:
+                throw new NotRegisteredRakeTokenException(responseBody);
+            case RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE:
+                throw new WrongRakeTokenUsageException(responseBody);
+
+            default: throw new RakeProtocolBrokenException(responseBody);
+        }
+
+        return responseBody;
+    }
+
+    static public void handleRakeException(int statusCode, String responseBody) {
+        try {
+            verifyStatusCode(statusCode);
+            verifyErrorCode(responseBody);
+        } catch (RakeProtocolBrokenException e) {
+            RakeLogger.e(e);
+        } catch (InsufficientJsonFieldException e) {
+            RakeLogger.e(e);
+        } catch (InvalidJsonSyntaxException e) {
+            RakeLogger.e(e);
+        } catch (NotRegisteredRakeTokenException e) {
+            RakeLogger.e(e);
+        } catch (WrongRakeTokenUsageException e) {
+            RakeLogger.e(e);
+        } catch (InvalidEndPointException e) {
+            RakeLogger.e(e);
+        } catch (InternalServerErrorException e) {
+            RakeLogger.e(e);
+        }
+    }
+
 }

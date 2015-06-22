@@ -12,8 +12,8 @@ public abstract class RakeUserConfig {
 
     /* wrapping functions for readability */
     public final RUNNING_ENV getRunningMode() { return provideRunningMode(); }
-    public final String getDevToken()  { return provideDevToken();    }
     public final String getLiveToken() { return provideLiveToken();   }
+    public final String getDevToken()  { return provideDevToken();    }
     public int getFlushInterval() { return provideFlushIntervalAsSecond(); }
     public int getMaxLogTrackCount() { return provideMaxLogTrackCount(); }
     public boolean getPrintInfoFlag() { return printDebugInfo(); };

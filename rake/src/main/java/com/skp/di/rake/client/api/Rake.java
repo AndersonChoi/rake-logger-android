@@ -41,9 +41,6 @@ public class Rake {
         try {
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackable = ShuttleProtocol.getTrackable(shuttle, superProperties, defaultProperties);
-
-            debugLogger.i("Tracked: \n" + trackable.toString());
-
         } catch (JSONException e) {
             RakeLogger.e("Can't build trackable", e);
         } catch (Exception e) {
@@ -54,7 +51,6 @@ public class Rake {
     }
 
     public void flush() {
-        debugLogger.i("flush called");
         core.flush();
     }
 
@@ -130,7 +126,7 @@ public class Rake {
         }
 
         debugLogger.i("total super-properties: \n" + this.superProperties);
-        savePrefenrences();
+        savePreferences();
     }
 
     public void unregisterSuperProperties(String superPropertyName) {
@@ -140,7 +136,7 @@ public class Rake {
 
         debugLogger.i("unregister super-property: " + superPropertyName);
         debugLogger.i("total super-properties: \n" + this.superProperties);
-        savePrefenrences();
+        savePreferences();
     }
 
     public void clearSuperProperties() {
@@ -177,7 +173,7 @@ public class Rake {
         debugLogger.i("read super-properties from SharedPref, now super-properties: \n" + this.superProperties);
     }
 
-    private void savePrefenrences() {
+    private void savePreferences() {
         synchronized (this.superProperties) {
             String props = superProperties.toString();
             SharedPreferences.Editor prefsEditor = sharedPref.edit();

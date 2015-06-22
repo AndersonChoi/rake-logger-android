@@ -1,26 +1,20 @@
 package com.skp.di.rake.client.network;
 
-import com.skp.di.rake.client.config.RakeMetaConfig;
+import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
-import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
-import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
-import com.skp.di.rake.client.protocol.exception.InvalidEndPointException;
-import com.skp.di.rake.client.protocol.exception.InvalidJsonSyntaxException;
-import com.skp.di.rake.client.protocol.exception.NotRegisteredRakeTokenException;
 import com.skp.di.rake.client.protocol.exception.RakeException;
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
-import com.skp.di.rake.client.protocol.exception.WrongRakeTokenUsageException;
 import com.skp.di.rake.client.utils.RakeLogger;
 import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -38,16 +32,52 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.List;
 
+/**
+ * Not thread-safe.
+ * Instances of this class should only be used by a single thread.
+ */
 public class RakeHttpClient {
 
-    RakeMetaConfig config;
+    private RakeUserConfig config;
+    public enum ContentType { JSON, URL_ENCODED_FORM }
+    private String endPoint;
+    private ContentType contentType;
+    private String LIVE_MODE_ENDPOINT = "https://rake.skplanet.com:8443/log/track";
+    private String DEV_MODE_ENDPOINT  = "https://pg.rake.skplanet.com:8443/log/track";
+    static public final int DEFAULT_CONNECTION_TIMEOUT = 3000;
+    static public final int DEFAULT_SOCKET_TIMEOUT = 120000;
+    private int connectionTimeout;
+    private int socketTimeout;
 
-    public RakeHttpClient(RakeMetaConfig config) {
+    public void setEndPoint(String endPoint) { this.endPoint = endPoint; }
+    /* to support legacy api `setRakeServer` */
+    public void setEndPointLegacy(String incompleteEndPoint) { setEndPoint(incompleteEndPoint + "/track"); }
+    public String getEndPoint() { return this.endPoint; }
+
+    public void setConnectionTimeout(int milliseconds) { this.connectionTimeout = milliseconds; }
+    public void setSocketTImeout(int milliseconds) { this.socketTimeout = milliseconds; }
+    public int getConnectionTimeout() { return this.connectionTimeout; }
+    public int getSocketTimeout() { return this.socketTimeout; }
+
+
+    public RakeHttpClient(RakeUserConfig config, ContentType contentType) {
         this.config = config;
+        this.contentType = contentType;
+
+        if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode())
+            endPoint = DEV_MODE_ENDPOINT;
+        else if (RakeUserConfig.RUNNING_ENV.LIVE == config.getRunningMode())
+            endPoint = LIVE_MODE_ENDPOINT;
+        else
+            throw new RakeProtocolBrokenException("Can't set endpoint due to invalid runningMode from RakeUserConfig");
+
+        this.connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+        this.socketTimeout = DEFAULT_SOCKET_TIMEOUT;
     }
 
     public String send(List<JSONObject> tracked) {
@@ -61,20 +91,30 @@ public class RakeHttpClient {
             responseBody = convertHttpResponseToString(res);
 
             int statusCode = res.getStatusLine().getStatusCode();
-            handleRakeException(statusCode, responseBody);
+            verifyResponse(statusCode, responseBody);
 
         } catch(UnsupportedEncodingException e) {
             RakeLogger.e("Cant' build StringEntity using body", e);
         } catch(JSONException e) {
             RakeLogger.e("Can't build RakeRequestBody", e);
         } catch(ClientProtocolException e) {
-            RakeLogger.e("Can't send message to server", e);
+            RakeLogger.e("Invalid Network Protocol", e);
+        } catch (SocketTimeoutException e) {
+            // TODO Retry
+            RakeLogger.e("Socket timeout occurred", e);
+        } catch (ConnectTimeoutException e) {
+            // TODO Retry
+            RakeLogger.e("Connection timeout occurred", e);
         } catch (IOException e) {
+            // TODO Retry
             RakeLogger.e("Can't send message to server", e);
         } catch (RakeException e) {
             throw e; /* to support test */
         } catch(GeneralSecurityException e) {
             RakeLogger.e("Can't build HttpsClient", e);
+        } catch(OutOfMemoryError e) {
+            // TODO Retry
+            RakeLogger.e("Not enough memory", e);
         } catch (Exception e) {
             RakeLogger.e("Uncaught exception occurred", e);
         }
@@ -82,93 +122,24 @@ public class RakeHttpClient {
         return responseBody;
     }
 
-    protected void handleRakeException(int statusCode, String responseBody) {
-        try {
-            verifyResponse(statusCode, responseBody);
-        } catch (RakeProtocolBrokenException e) {
-            RakeLogger.e(e);
-        } catch (InsufficientJsonFieldException e) {
-            RakeLogger.e(e);
-        } catch (InvalidJsonSyntaxException e) {
-            RakeLogger.e(e);
-        } catch (NotRegisteredRakeTokenException e) {
-            RakeLogger.e(e);
-        } catch (WrongRakeTokenUsageException e) {
-            RakeLogger.e(e);
-        } catch (InvalidEndPointException e) {
-            RakeLogger.e(e);
-        } catch (InternalServerErrorException e) {
-            RakeLogger.e(e);
-        }
-    }
-
     protected void verifyResponse(int statusCode, String responseBody) {
-        verifyStatus(statusCode);
-        verifyErrorCode(responseBody);
-    }
-
-    private String verifyErrorCode(String responseBody) throws
-            InsufficientJsonFieldException,
-            InvalidJsonSyntaxException,
-            NotRegisteredRakeTokenException,
-            WrongRakeTokenUsageException {
-
-        JSONObject response = null;
-        int errorCode = 0;
-
-        try {
-            response = new JSONObject(responseBody);
-            errorCode = response.getInt("errorCode");
-        } catch (JSONException e) {
-            throw new RakeProtocolBrokenException(e);
-        }
-
-        switch(errorCode) {
-            case RakeProtocol.ERROR_CODE_OK: /* pass through */
-                break;
-            case RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD:
-                throw new InsufficientJsonFieldException(responseBody);
-            case RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX:
-                throw new InvalidJsonSyntaxException(responseBody);
-            case RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN:
-                throw new NotRegisteredRakeTokenException(responseBody);
-            case RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE:
-                throw new WrongRakeTokenUsageException(responseBody);
-
-            default: throw new RakeProtocolBrokenException(responseBody);
-        }
-
-        return responseBody;
-    }
-
-    private void verifyStatus(int statusCode) throws
-            RakeProtocolBrokenException,
-            InvalidEndPointException,
-            InternalServerErrorException {
-
-        switch(statusCode) {
-            case HttpStatus.SC_NOT_FOUND:
-                throw new InvalidEndPointException("");
-            case HttpStatus.SC_INTERNAL_SERVER_ERROR:
-                throw new InternalServerErrorException("");
-            default: break; /* pass through */
-        }
+        RakeProtocol.handleRakeException(statusCode, responseBody);
     }
 
     protected HttpResponse executePost(List<JSONObject> tracked)
             throws IOException, JSONException, GeneralSecurityException {
 
-        HttpClient   client = null;
+        HttpClient client = null;
 
-        if (config.getEndpoint().startsWith("https"))     client = createHttpsClient();
-        else if (config.getEndpoint().startsWith("http")) client = createHttpClient();
+        if (endPoint.startsWith("https"))     client = createHttpsClient();
+        else if (endPoint.startsWith("http")) client = createHttpClient();
         else throw new RakeProtocolBrokenException("Unsupported endpoint protocol");
 
         HttpEntity entity = null;
 
-        if      (config.getContentType() == RakeMetaConfig.ContentType.JSON)
+        if      (contentType == ContentType.JSON)
             entity = RakeProtocol.buildJsonEntity(tracked);
-        else if (config.getContentType() == RakeMetaConfig.ContentType.URL_ENCODED_FORM)
+        else if (contentType == ContentType.URL_ENCODED_FORM)
             entity = RakeProtocol.buildUrlEncodedEntity(tracked);
         else throw new RakeProtocolBrokenException("Unsupported contentType");
 
@@ -220,8 +191,8 @@ public class RakeHttpClient {
 
     private HttpParams createHttpParams() {
         HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, config.getHttpConnectionTimeout());
-        HttpConnectionParams.setSoTimeout(params, config.getHttpSocketTimeout());
+        HttpConnectionParams.setConnectionTimeout(params, connectionTimeout);
+        HttpConnectionParams.setSoTimeout(params, socketTimeout);
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
         HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
 
@@ -229,10 +200,10 @@ public class RakeHttpClient {
     }
 
     private HttpPost createHttpPost(HttpEntity entity) {
-        HttpPost post = new HttpPost(config.getEndpoint());
+        HttpPost post = new HttpPost(endPoint);
         post.setEntity(entity);
 
-        if (config.getContentType() == RakeMetaConfig.ContentType.JSON) {
+        if (contentType == ContentType.JSON) {
             post.setHeader("Content-Type", "application/json");
             post.setHeader("Accept", "application/json");
         }

@@ -28,7 +28,7 @@ public class RakeFactory {
         Rake logger;
 
         if (null == dao) dao = new RakeDaoSQLite(config, context);
-        if (null == client) client = new RakeHttpClient(new RakeMetaConfig(config));
+        if (null == client) client = new RakeHttpClient(config, RakeHttpClient.ContentType.URL_ENCODED_FORM);
         if (null == sysInfo) sysInfo = new SystemInformation(context);
         if (null == core) core = new RakeCore(dao, client, config);
 

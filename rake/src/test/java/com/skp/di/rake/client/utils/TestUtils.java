@@ -1,7 +1,8 @@
 package com.skp.di.rake.client.utils;
 
-import com.skp.di.rake.client.config.RakeMetaConfig;
+import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.mock.SampleDevConfig;
+import com.skp.di.rake.client.network.RakeHttpClient;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -19,19 +20,20 @@ import java.util.List;
 import rx.exceptions.OnErrorThrowable;
 
 public class TestUtils {
-    static private RakeMetaConfig config = new RakeMetaConfig(new SampleDevConfig());
+    static private RakeUserConfig config = new SampleDevConfig();
+    static private String TEST_MODE_ENDPOINT = "http://localhost:9010/track";
 
     static public HttpClient createHttpClient() {
         HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, config.getHttpConnectionTimeout());
-        HttpConnectionParams.setSoTimeout(params, config.getHttpSocketTimeout());
+        HttpConnectionParams.setConnectionTimeout(params, RakeHttpClient.DEFAULT_CONNECTION_TIMEOUT);
+        HttpConnectionParams.setSoTimeout(params, RakeHttpClient.DEFAULT_SOCKET_TIMEOUT);
         HttpClient client = new DefaultHttpClient(params);
 
         return client;
     }
 
     static public HttpPost createHttpPost(StringEntity se) {
-        HttpPost post = new HttpPost(config.getEndpoint());
+        HttpPost post = new HttpPost(TEST_MODE_ENDPOINT);
         post.setEntity(se);
         post.setHeader("Content-Type", "application/json");
         post.setHeader("Accept", "application/json");
