@@ -35,6 +35,10 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
     }
+
+    lintOptions {
+        abortOnError false
+    }
 }
 
 retrolambda {
@@ -84,14 +88,15 @@ dependencies {
 // tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn updateRakeVersion }
 
 build.doLast {
+    String currentProject = "${rootProject.projectDir}/rake"
     String releaseJarName = "${archivesBaseName}-${version}.jar"
-    String releaseDir = "release/"
-    String appLibsDir = "../app/libs"
+    String releaseDir = "${currentProject}/release/"
+    String appLibsDir = "${rootProject.projectDir}/app/libs"
 
     // extract jar from aar, then copy it into 'release' dir
     // ref: https://github.com/urbanairship/ua-unity-plugin/blob/79b997a24fce24eff965e6c905b68d36758ebe96/android-plugin/build.gradle#L77
     copy {
-        from zipTree(file("build/outputs/aar/rake-release.aar"))
+        from zipTree(file("${currentProject}/build/outputs/aar/rake-release.aar"))
         into releaseDir
         rename "classes.jar", releaseJarName
         exclude "R.txt", "assets", "aidl", "aapt/**/*", "res/**/*", "AndroidManifest.xml"
