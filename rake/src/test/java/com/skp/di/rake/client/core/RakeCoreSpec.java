@@ -8,6 +8,7 @@ import com.skp.di.rake.client.mock.MockRakeHttpClient;
 import com.skp.di.rake.client.mock.SampleDevConfig;
 import com.skp.di.rake.client.mock.SampleLiveConfig;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
+import com.skp.di.rake.client.persistent.RakeDaoSQLite;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
@@ -53,11 +55,17 @@ public class RakeCoreSpec {
         log = new JSONObject();
         log.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
 
-        devCore  = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(null), devConfig);
+        devCore  = new RakeCore(
+//                new RakeDaoSQLite(devConfig, RuntimeEnvironment.application),
+                new RakeDaoMemory(),
+                new MockRakeHttpClient(devConfig), devConfig);
         devObserver = mock(Observer.class);
         devCore.subscribe(AndroidSchedulers.mainThread(), devObserver);
 
-        liveCore = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(null), liveConfig);
+        liveCore = new RakeCore(
+//                new RakeDaoSQLite(liveConfig, RuntimeEnvironment.application),
+                new RakeDaoMemory(),
+                new MockRakeHttpClient(liveConfig), liveConfig);
         liveObserver = mock(Observer.class);
         liveCore.subscribe(AndroidSchedulers.mainThread(), liveObserver);
     }
@@ -69,7 +77,7 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void testFlush() {
+    public void test_not_to_flush_immediately_when_live_env() {
         liveCore.track(log);
         verify(liveObserver, never()).onNext(any());
 
@@ -87,7 +95,7 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void testShouldNotFlushWhenEmpty() {
+    public void test_not_to_flush_when_empty() {
         liveCore.flush();
 
         verify(liveObserver, never()).onNext(any());

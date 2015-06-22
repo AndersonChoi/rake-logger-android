@@ -26,9 +26,7 @@ public class RakeCore {
 
     private PublishSubject<Integer>    flushable;
     private PublishSubject<JSONObject> trackable;
-
     private Observable<Integer> timer;
-
     private Observable<String> worker;
     private Subscription subscription;
 
@@ -66,52 +64,45 @@ public class RakeCore {
 
                     @Override
                     public void onNext(String response) {
-                        debugLogger.i("Server Response: \n" + response);
+                        if (null == response) return;
+                        debugLogger.i("Observer Thread: " + Thread.currentThread().getName());
+                        debugLogger.i("Server Responses: " + response);
                     }
                 });
     }
 
-    private Observable<String> buildDevWorker(Scheduler scheduler) {
-        return  trackable
-                .observeOn(scheduler)
-                .map(json -> {
-                    debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
-                    return client.send(Arrays.asList(json));
-                });
-    }
-
-    private Observable<String> buildLiveWorker(Scheduler scheduler) {
+    private Observable<String> buildWorker(Scheduler scheduler) {
         return trackable
-                .observeOn(scheduler)
-                .map(json -> {
+                .mergeWith(timer.mergeWith(flushable).map(fired -> { return null; }))
+                .observeOn(scheduler) /* dao access in IO thread */
+                .map(nullOrJson-> {
+                    /* if null == nullOrJson, timer was fired or flush was commanded */
                     debugLogger.i("Persisting Thread: " + Thread.currentThread().getName());
 
-                    int count = dao.add(json);
+                    /* if -1, null */
+                    int totalCount = dao.add(nullOrJson);
 
-                    if (count == config.getMaxLogTrackCount())
-                        debugLogger.i("Rake is full. Auto-flushed");
+                    if (-1 == totalCount /* timer was fired or, flush was commanded */
+                     || totalCount >= config.getMaxLogTrackCount() /* persistence is full */
+                     || RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode()) /* dev mode */ {
+                        return dao.getAndRemoveOldest(config.getMaxLogTrackCount());
+                    }
 
-                    return count;
-                }).filter(count -> count == config.getMaxLogTrackCount())
-                .mergeWith(timer.mergeWith(flushable))
-                .observeOn(scheduler)
-                .map(flushCommanded -> {
-                    List<JSONObject> tracked = dao.getAndRemoveOldest(config.getMaxLogTrackCount());
-                    debugLogger.i("Total log count: " + tracked.size());
+                    /* track is called, but persistence is not full  */
+                    return null;
+                }).filter(nullOrJsonList -> null != nullOrJsonList)
+                .observeOn(scheduler) /* network operation in another IO thread */
+                .map(tracked -> {
                     debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
-
+                    debugLogger.i("sent log count: " + tracked.size());
                     return client.send(tracked); /* return response. it might be null */
-                }).filter(responseBody -> null != responseBody);
+                });
     }
 
     public Subscription subscribe(Scheduler scheduler, Observer<String> observer) {
         if (null != subscription) subscription.unsubscribe();
 
-        // if mode is dev, then worker has no timer, and are not flushable
-        if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode())
-            worker = buildDevWorker(scheduler);
-        else /* RUNNING_ENV.LIVE */
-            worker = buildLiveWorker(scheduler);
+        worker = buildWorker(scheduler);
 
         return worker
                 .onErrorReturn(t -> {
@@ -123,10 +114,15 @@ public class RakeCore {
     }
 
     public void track(JSONObject json) {
-        if (null != json) trackable.onNext(json);
+        if (null == json) return;
+
+        debugLogger.i("track called: \n" + json.toString());
+        trackable.onNext(json);
+
     }
 
     public void flush() {
+        debugLogger.i("flush called");
         flushable.onNext(null);
     }
 }
