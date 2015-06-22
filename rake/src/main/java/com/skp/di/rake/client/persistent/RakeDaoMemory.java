@@ -2,6 +2,7 @@ package com.skp.di.rake.client.persistent;
 
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,12 +16,13 @@ public class RakeDaoMemory implements RakeDao {
 
     @Override
     public int add(JSONObject log) {
-        logQueue.add(log);
-        return getCount();
+        if (null == log) return -1;
+        return add(Arrays.asList(log));
     }
 
     @Override
     public int add(List<JSONObject> logs) {
+        if (null == logs || 0 == logs.size()) return -1;
         logQueue.addAll(logs);
         return getCount();
     }
@@ -43,7 +45,8 @@ public class RakeDaoMemory implements RakeDao {
             i.remove();
         }
 
-        return list;
+        // if empty, return null;
+        return (null != list && 0 != list.size()) ? list : null;
     }
 
     @Override

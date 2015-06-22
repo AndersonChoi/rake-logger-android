@@ -44,7 +44,6 @@ public class RakeDaoSQLiteSpec {
             rakeDao.add(log);
         }
 
-
         List<JSONObject> list = rakeDao.getAndRemoveOldest(5);
 
         // tracked log should be in order.
@@ -53,4 +52,10 @@ public class RakeDaoSQLiteSpec {
             assertEquals("value" + i, log.get("key"));
         }
     }
+
+    @Test
+    public void test_getAndRemoveOldest_should_return_null_when_empty() {
+        assertEquals(null, rakeDao.getAndRemoveOldest(5));
+    }
 }
+

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteOpenHelper;
 
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.utils.RakeLogger;
@@ -14,7 +13,6 @@ import com.skp.di.rake.client.utils.RakeLoggerFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -116,7 +114,7 @@ public class RakeDaoSQLite implements RakeDao {
     private void _removeRowOldest (long time, SQLiteDatabase db) {
         String tableName = RAKE_LOG_TABLE.getName();
 
-        debugLogger.i("Clean up event times, time: " + time + "from table " + tableName);
+        debugLogger.i("Clean up all events until [time: " + time + "] from table " + tableName);
 
         try {
             db.delete(tableName, KEY_CREATED_AT + " <= " + time, null);
@@ -173,7 +171,8 @@ public class RakeDaoSQLite implements RakeDao {
             if (c != null) { c.close(); }
         }
 
-        return result;
+        // if empty, return null
+        return (null != result && 0 != result.size()) ? result : null;
     }
 
     @Override
