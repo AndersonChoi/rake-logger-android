@@ -80,7 +80,7 @@ public class RakeHttpClient {
         this.socketTimeout = DEFAULT_SOCKET_TIMEOUT;
     }
 
-    public String send(List<JSONObject> tracked) {
+    public List<JSONObject> send(List<JSONObject> tracked) {
 
         if (null == tracked || 0 == tracked.size()) return null;
 
@@ -119,7 +119,8 @@ public class RakeHttpClient {
             RakeLogger.e("Uncaught exception occurred", e);
         }
 
-        return responseBody;
+        /* returning null means, there is no need to retry */
+        return null;
     }
 
     protected void verifyResponse(int statusCode, String responseBody) {

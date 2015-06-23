@@ -14,7 +14,7 @@ public class SampleDevConfig2 extends RakeUserConfig {
     public String provideLiveToken() { return "live2k03"; }
 
     @Override
-    public int provideFlushIntervalAsSecond() {
+    public int provideFlushIntervalAsMilliseconds() {
         return 60;
     }
 

@@ -19,7 +19,7 @@ public class SampleLiveConfig extends RakeUserConfig {
     }
 
     @Override
-    public int provideFlushIntervalAsSecond() {
+    public int provideFlushIntervalAsMilliseconds() {
         return 10; /* seconds */
     }
 

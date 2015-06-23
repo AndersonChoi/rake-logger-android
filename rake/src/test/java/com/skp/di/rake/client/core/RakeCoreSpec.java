@@ -20,8 +20,12 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
+import java.util.List;
+
 import rx.Observer;
+import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,11 +42,11 @@ import static org.mockito.Mockito.verify;
 public class RakeCoreSpec {
 
     RakeCore liveCore;
-    Observer<String> liveObserver;
+    Observer<List<JSONObject>> liveObserver;
     RakeUserConfig liveConfig = new SampleLiveConfig();
 
     RakeCore devCore;
-    Observer<String> devObserver;
+    Observer<List<JSONObject>> devObserver;
     RakeUserConfig devConfig  = new SampleDevConfig();
 
     int count = liveConfig.getMaxLogTrackCount();
@@ -56,28 +60,34 @@ public class RakeCoreSpec {
         log.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
 
         devCore  = new RakeCore(
-//                new RakeDaoSQLite(devConfig, RuntimeEnvironment.application),
                 new RakeDaoMemory(),
                 new MockRakeHttpClient(devConfig), devConfig);
         devObserver = mock(Observer.class);
-        devCore.subscribe(AndroidSchedulers.mainThread(), devObserver);
+        devCore.buildCore(
+                devConfig,
+                AndroidSchedulers.mainThread(),
+                AndroidSchedulers.mainThread(),
+                devObserver);
 
         liveCore = new RakeCore(
-//                new RakeDaoSQLite(liveConfig, RuntimeEnvironment.application),
                 new RakeDaoMemory(),
                 new MockRakeHttpClient(liveConfig), liveConfig);
         liveObserver = mock(Observer.class);
-        liveCore.subscribe(AndroidSchedulers.mainThread(), liveObserver);
+        liveCore.buildCore(
+                liveConfig,
+                AndroidSchedulers.mainThread(),
+                AndroidSchedulers.mainThread(),
+                liveObserver);
     }
 
     @Test
-    public void testLiveCoreShouldNotFlush() throws InterruptedException {
+    public void test_LiveCore_Should_Not_Flush() throws InterruptedException {
         for (int i = 0; i < count - 1; i++) liveCore.track(log);
 
     }
 
     @Test
-    public void test_not_to_flush_immediately_when_live_env() {
+    public void test_Not_To_fLush_Immediately_When_Live_Env() {
         liveCore.track(log);
         verify(liveObserver, never()).onNext(any());
 
@@ -87,7 +97,7 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void testAutoFlush() {
+    public void test_Auto_Flush_When_Persistence_Is_Full() {
         for (int i = 0; i < count; i++) liveCore.track(log);
 
         verify(liveObserver, times(1)).onNext(any());
@@ -95,7 +105,7 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void test_not_to_flush_when_empty() {
+    public void test_Not_To_Flush_When_Empty() {
         liveCore.flush();
 
         verify(liveObserver, never()).onNext(any());
@@ -103,7 +113,7 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void testCoreWithDevConfigShouldFlushWhenTrackCalled() {
+    public void test_CoreWithDevConfig_Should_Flush_When_Track_Is_Called() {
         devCore.track(log);
 
         verify(devObserver, times(1)).onNext(any());
