@@ -18,7 +18,6 @@ import rx.Scheduler;
 import rx.Subscription;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 /**
  * Not thread-safe.
@@ -108,7 +107,7 @@ public class RakeCore {
         return this;
     }
 
-    private RakeCore withTimer(int flushInterval /* milliseconds */) {
+    private RakeCore withTimer(long flushInterval /* milliseconds */) {
         setFlushInterval(flushInterval);
         core = core.mergeWith(timer);
 
@@ -120,10 +119,12 @@ public class RakeCore {
                 .observeOn(persistScheduler) /* dao access in IO thread */
                 .map(nullOrJsonList -> {
                     /* if null == nullOrJson, timer was fired or flush was commanded */
-                    debugLogger.i("Persisting Thread: " + Thread.currentThread().getName());
-
-                    /* if -1, null */
+                    /* dao.add return -1, if the parameter is null */
                     int totalCount = dao.add(nullOrJsonList);
+
+                    if (totalCount != -1 /* if track */) {
+                        debugLogger.i("Persisting Thread: " + Thread.currentThread().getName());
+                    }
 
                     if (-1 == totalCount /* timer was fired or, flush was commanded */
                             || totalCount >= config.getMaxLogTrackCount() /* persistence is full */
@@ -186,7 +187,7 @@ public class RakeCore {
         flushable.onNext(null);
     }
 
-    public void setFlushInterval(int milliseconds) {
+    public void setFlushInterval(long milliseconds) {
         if (null != intervalSubscription && ! intervalSubscription.isUnsubscribed()) {
             stop.onNext(null); /* stop command */
             intervalSubscription.unsubscribe();
@@ -198,6 +199,7 @@ public class RakeCore {
                 .startWith(-1L) /* flush when app starts */
                 .takeUntil(stop)
                 .map(x -> {
+                    debugLogger.i("Timer fired");
                     this.timer.onNext(null);
                     return x;
                 })

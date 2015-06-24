@@ -54,7 +54,10 @@ public class Rake {
         core.flush();
     }
 
-
+    public void setFlushInterval(long milliseconds) {
+        debugLogger.i("set flush interval: " + milliseconds);
+        core.setFlushInterval(milliseconds);
+    }
 
 
 
@@ -82,7 +85,9 @@ public class Rake {
     /* Legacy API */
     private JSONObject superProperties;
 
-    public void setFlushInterval(Context context, long milliseconds) {}
+    public void setFlushInterval(Context context, long milliseconds) {
+        setFlushInterval(milliseconds);
+    }
     public void setDebug(Boolean debug) {}
     public void setRakeServer(Context onctext, String server) {}
 

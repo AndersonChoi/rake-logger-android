@@ -114,7 +114,7 @@ public class RakeTestUtils {
             }
 
             @Override
-            public int provideFlushIntervalAsMilliseconds() {
+            public long provideFlushIntervalAsMilliseconds() {
                 return intervalAsMilliseconds;
             }
 
