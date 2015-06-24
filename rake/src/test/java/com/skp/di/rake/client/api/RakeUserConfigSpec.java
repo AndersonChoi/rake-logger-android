@@ -10,8 +10,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import com.skp.di.rake.client.mock.SampleDevConfig;
-import com.skp.di.rake.client.mock.SampleDevConfig2;
+import com.skp.di.rake.client.utils.RakeTestUtils;
 
 import java.util.HashMap;
 
@@ -27,25 +26,26 @@ public class RakeUserConfigSpec {
     SystemInformation mockSysInfo;
     Context mockContext;
 
+    RakeUserConfig config1;
+    RakeUserConfig config2;
+
     @Before
     public void setUp() {
         mockSysInfo = mock(SystemInformation.class);
         mockContext = mock(Context.class);
+
+        config1 = RakeTestUtils.createDevConfig1();
+        config2 = RakeTestUtils.createDevConfig2();
     }
 
     @Test
-    public void testConfigShouldReturnProperTokenByRunningMode() {
-        RakeUserConfig config = new SampleDevConfig2();
-
-        assertEquals(RakeUserConfig.RUNNING_ENV.DEV, config.getRunningMode());
-        assertEquals(config.getDevToken(), config.getToken());
+    public void test_Config_Should_Return_Proper_Token_By_RunningMode() {
+        assertEquals(RakeUserConfig.RUNNING_ENV.DEV, config1.getRunningMode());
+        assertEquals(config1.getDevToken(), config1.getToken());
     }
 
     @Test
-    public void testRakeUserConfigEquals() {
-        RakeUserConfig config1 = new SampleDevConfig();
-        RakeUserConfig config2 = new SampleDevConfig2();
-
+    public void test_RakeUserConfig_Equals() {
         assertTrue(config1.equals(config1));
         assertFalse(config1.equals(config2));
     }
@@ -53,10 +53,7 @@ public class RakeUserConfigSpec {
     class TestLogger {}
 
     @Test
-    public void testRakeIsSingletonPerUserConfig() {
-        RakeUserConfig config1 = new SampleDevConfig();
-        RakeUserConfig config2 = new SampleDevConfig2();
-
+    public void test_Rake_Is_Singleton_Per_RakeUserConfig() {
         // Can't test using Rake instance due to Context
         HashMap<RakeUserConfig, TestLogger> map = new HashMap<>();
         map.put(config1, new TestLogger());

@@ -1,6 +1,6 @@
 package library.test.rxjava;
 
-import com.skp.di.rake.client.utils.TestUtils;
+import com.skp.di.rake.client.utils.RakeTestUtils;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 
@@ -62,7 +62,7 @@ public class RxJavaSpec {
     public void testRxJava() {
         Iterable<String> iterable = Observable.from(names).toBlocking().toIterable();
 
-        List<String> result   = TestUtils.toList(iterable);
+        List<String> result   = RakeTestUtils.toList(iterable);
         List<String> expected = Arrays.asList(names);
 
         assertEquals(expected, result);
@@ -74,7 +74,7 @@ public class RxJavaSpec {
             return s + "!";
         }).toBlocking().toIterable();
 
-        List<String> result = TestUtils.toList(iterable);
+        List<String> result = RakeTestUtils.toList(iterable);
         List<String> expected = Arrays.asList("1ambda!", "2ambda!", "3ambda!");
 
         assertEquals(expected, result);
@@ -88,7 +88,7 @@ public class RxJavaSpec {
                 .toBlocking()
                 .toIterable();
 
-        List<String> result = TestUtils.toList(iter);
+        List<String> result = RakeTestUtils.toList(iter);
         List<String> expected = Arrays.asList("1ambda", "2ambda");
 
         assertEquals(expected, result);
@@ -216,7 +216,7 @@ public class RxJavaSpec {
         subject.onCompleted();
 
         Iterable<String> iter = o.toBlocking().toIterable();
-        List<String> result   = TestUtils.toList(iter);
+        List<String> result   = RakeTestUtils.toList(iter);
         List<String> expected = Arrays.asList("1ambda", "2ambda");
 
         assertEquals(expected, result);
@@ -231,7 +231,7 @@ public class RxJavaSpec {
                     Boolean serverError = true;
                     if (serverError) throw new RuntimeException("e");
 
-                    HttpResponse res = TestUtils.sendHttpPost("{}");
+                    HttpResponse res = RakeTestUtils.sendHttpPost("{}");
                     return res;
                 });
     }

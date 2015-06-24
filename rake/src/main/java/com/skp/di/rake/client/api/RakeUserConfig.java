@@ -4,8 +4,8 @@ public abstract class RakeUserConfig {
 
     /* function user should implement */
     abstract public RUNNING_ENV provideRunningMode();
-    abstract public String provideDevToken();
     abstract public String provideLiveToken();
+    abstract public String provideDevToken();
     abstract public int provideFlushIntervalAsMilliseconds();
     abstract public int provideMaxLogTrackCount();
     abstract public boolean printDebugInfo();

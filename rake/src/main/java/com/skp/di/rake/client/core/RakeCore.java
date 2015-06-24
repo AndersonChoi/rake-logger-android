@@ -18,6 +18,7 @@ import rx.Scheduler;
 import rx.Subscription;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
+import rx.subjects.Subject;
 
 /**
  * Not thread-safe.
@@ -30,9 +31,11 @@ public class RakeCore {
 
     private PublishSubject<List<JSONObject>> flushable;
     private PublishSubject<List<JSONObject>> trackable;
-    private Observable<List<JSONObject>> timer;
+    private PublishSubject<List<JSONObject>> timer;
+    private PublishSubject<List<JSONObject>> stop; /* to stop `timer` */
     private Observable<List<JSONObject>> core;
-    private Subscription subscription;
+    private Subscription intervalSubscription;
+    private Subscription coreSubscription;
     private Observer<List<JSONObject>> metricObserver;
 
     private Scheduler persistScheduler;
@@ -40,25 +43,22 @@ public class RakeCore {
 
     private RakeLogger debugLogger;
 
-    public RakeCore(RakeDao dao, RakeHttpClient client, RakeUserConfig config) {
+    public RakeCore(RakeDao dao,
+                    RakeHttpClient client,
+                    RakeUserConfig config) {
         this.dao    = dao;
         this.client = client;
         this.config = config;
         this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
-        this.timer = Observable
-                .interval(config.getFlushIntervalAsMilliseconds() ,TimeUnit.SECONDS)
-                .startWith(-1L) /* flush when app starts */
-                .map(x -> {
-                    debugLogger.i("Timer fired");
-                    return null;
-                });
-
         this.flushable = PublishSubject.create();
         this.trackable = PublishSubject.create();
+        this.timer = PublishSubject.create();
+        this.stop = PublishSubject.create();
+        this.intervalSubscription = null;
 
-        this.persistScheduler = Schedulers.computation();
-        this.networkScheduler = Schedulers.io();
+        this.persistScheduler = Schedulers.computation(); /* usually Schedulers.computation() */
+        this.networkScheduler = Schedulers.io(); /* usually Schedulers.io() */
 
         this.metricObserver = new Observer<List<JSONObject>>() {
             @Override
@@ -79,14 +79,15 @@ public class RakeCore {
             }
         };
 
+        // merging flushable, trackable, timer with
+        // schedulers that define which thread will be used
         buildCore(config, persistScheduler, networkScheduler, metricObserver);
     }
 
-    public void buildCore(RakeUserConfig config,
+    private void buildCore(RakeUserConfig config,
                           Scheduler persistScheduler,
                           Scheduler networkScheduler,
                           Observer<List<JSONObject>> observer) {
-
         startWithDefaultCore()
                 .withTimer(config.getFlushIntervalAsMilliseconds())
                 .withPersistence(persistScheduler)
@@ -98,30 +99,23 @@ public class RakeCore {
         // TODO compute metric in persist scheduler
     }
 
-    public RakeCore startWithDefaultCore() {
-        if (null != subscription && !subscription.isUnsubscribed())
-            subscription.unsubscribe();
+    private RakeCore startWithDefaultCore() {
+        if (null != coreSubscription && !coreSubscription.isUnsubscribed())
+            coreSubscription.unsubscribe();
 
         core = trackable.mergeWith(flushable);
 
         return this;
     }
 
-    public RakeCore withTimer(int flushInterval /* milliseconds */) {
-        Observable<List<JSONObject>> timer = Observable
-                .interval(flushInterval,TimeUnit.SECONDS)
-                .startWith(-1L) /* flush when app starts */
-                .map(x -> {
-                    debugLogger.i("Timer fired");
-                    return null;
-                });
-
+    private RakeCore withTimer(int flushInterval /* milliseconds */) {
+        setFlushInterval(flushInterval);
         core = core.mergeWith(timer);
 
         return this;
     }
 
-    public RakeCore withPersistence(Scheduler persistScheduler) {
+    private RakeCore withPersistence(Scheduler persistScheduler) {
         core = core
                 .observeOn(persistScheduler) /* dao access in IO thread */
                 .map(nullOrJsonList -> {
@@ -144,7 +138,7 @@ public class RakeCore {
         return this;
     }
 
-    public RakeCore withNetworking(Scheduler networkScheduler) {
+    private RakeCore withNetworking(Scheduler networkScheduler) {
         core = core
                 .observeOn(networkScheduler) /* network operation in another IO thread */
                 .map(tracked -> {
@@ -157,7 +151,7 @@ public class RakeCore {
     }
 
     /* retry means that persisting all failed log into SQLite */
-    public RakeCore withRetry(Scheduler persistScheduler) {
+    private RakeCore withRetry(Scheduler persistScheduler) {
         core = core
                 .map(failed -> {
                     // TODO metric,, write retry tests
@@ -169,16 +163,15 @@ public class RakeCore {
         return this;
     }
 
-    public void endWithObserver(Observer<List<JSONObject>> observer) {
-        subscription = core
+    private void endWithObserver(Observer<List<JSONObject>> observer) {
+        coreSubscription = core
                 .onErrorReturn(t -> {
                     // TODO: onErrorReturn
                     // TODO metric
                     RakeLogger.e("exception occurred. onErrorReturn", t);
                     return null;
                 })
-                        // TODO subscribeOn or observeOn
-                .subscribe(observer);
+                .subscribe(observer); // TODO subscribeOn or observeOn
     }
 
     public void track(JSONObject json) {
@@ -186,11 +179,51 @@ public class RakeCore {
 
         debugLogger.i("track called: \n" + json.toString());
         trackable.onNext(Arrays.asList(json));
-
     }
 
     public void flush() {
         debugLogger.i("flush called");
         flushable.onNext(null);
+    }
+
+    public void setFlushInterval(int milliseconds) {
+        if (null != intervalSubscription && ! intervalSubscription.isUnsubscribed()) {
+            stop.onNext(null); /* stop command */
+            intervalSubscription.unsubscribe();
+        }
+
+        // TODO subscribeOn ComputationThread
+        intervalSubscription = Observable
+                .interval(milliseconds ,TimeUnit.MILLISECONDS)
+                .startWith(-1L) /* flush when app starts */
+                .takeUntil(stop)
+                .map(x -> {
+                    this.timer.onNext(null);
+                    return x;
+                })
+                .onErrorReturn(t -> null) /* ignore timer errors */
+                .subscribe(new Observer<Object>() {
+                    @Override
+                    public void onCompleted() {
+                        debugLogger.i("Timer interval refreshed. This timer will be perished");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) { /* do nothing */ }
+
+                    @Override
+                    public void onNext(Object o) {
+                    }
+                });
+    }
+
+    /* to support test */
+    public Observable<List<JSONObject>> getTimer() {
+        return timer;
+    }
+
+    /* to support test */
+    public void setTestObserverAndScheduler(Scheduler s, Observer<List<JSONObject>> o) {
+        buildCore(this.config, s, s, o);
     }
 }

@@ -1,10 +1,5 @@
 package library.test.json;
 
-
-import com.skp.di.rake.client.mock.SampleDevConfig;
-import com.skp.di.rake.client.utils.RakeLogger;
-import com.skp.di.rake.client.utils.RakeLoggerFactory;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;

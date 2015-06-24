@@ -6,15 +6,13 @@ import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.core.RakeCore;
 import com.skp.di.rake.client.mock.MockSystemInformation;
-import com.skp.di.rake.client.mock.SampleDevConfig2;
 import com.skp.di.rake.client.protocol.ShuttleProtocol;
-import com.skp.di.rake.client.utils.RakeLogger;
+import com.skp.di.rake.client.utils.RakeTestUtils;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -53,7 +51,8 @@ public class RakeSpec {
     @Before
     public void setUp() throws IOException, JSONException {
         ShadowLog.stream = System.out; /* Robolectric setting */
-        config = new SampleDevConfig2();
+        config = RakeTestUtils.createDevConfig1();
+
         mockCore = mock(RakeCore.class);
 
         mockSysInfo = mock(SystemInformation.class);

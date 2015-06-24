@@ -1,6 +1,6 @@
 package com.skp.di.rake.client.persistent;
 
-import com.skp.di.rake.client.mock.SampleDevConfig;
+import com.skp.di.rake.client.utils.RakeTestUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,8 +23,9 @@ public class RakeDaoSQLiteSpec {
 
     @Before
     public void setUp() {
+
         rakeDao = new RakeDaoSQLite(
-                new SampleDevConfig(),
+                RakeTestUtils.createDevConfig1(),
                 RuntimeEnvironment.application);
     }
 

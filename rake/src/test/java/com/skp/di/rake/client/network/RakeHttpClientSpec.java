@@ -2,9 +2,7 @@ package com.skp.di.rake.client.network;
 
 
 import com.skp.di.rake.client.api.RakeUserConfig;
-import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.mock.MockRakeHttpClient;
-import com.skp.di.rake.client.mock.SampleDevConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
@@ -25,6 +23,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import com.skp.di.rake.client.mock.MockServer;
+import com.skp.di.rake.client.utils.RakeTestUtils;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -39,16 +38,27 @@ import static org.junit.Assert.assertEquals;
 public class RakeHttpClientSpec {
 
     RakeHttpClient mockClient;
-    RakeHttpClient testClient;
+    RakeHttpClient testHttpClient;
     String TEST_MODE_ENDPOINT = "http://localhost:9010/track";
+    RakeUserConfig devConfig;
 
     @Before
     public void setUp() throws JSONException, IOException {
         ShadowLog.stream = System.out;
-        mockClient  = new MockRakeHttpClient(new SampleDevConfig());
-        testClient =
-                new RakeHttpClient(new SampleDevConfig(), RakeHttpClient.ContentType.URL_ENCODED_FORM);
-        testClient.setEndPoint(TEST_MODE_ENDPOINT);
+
+        devConfig = RakeTestUtils.createRakeUserConfig(
+                RakeUserConfig.RUNNING_ENV.DEV,
+                "liveff21", "devfzkx1",
+                10000, 5
+        );
+
+        mockClient  = new MockRakeHttpClient(devConfig);
+
+        testHttpClient = new RakeHttpClient(
+                RakeTestUtils.createDevConfig1(),
+                RakeHttpClient.ContentType.URL_ENCODED_FORM);
+
+        testHttpClient.setEndPoint(TEST_MODE_ENDPOINT);
     }
 
     @After
@@ -58,8 +68,8 @@ public class RakeHttpClientSpec {
     @Test
     /* support to RakeApi.setRakeServer */
     public void test_setEndPointLegacy() {
-        testClient.setEndPointLegacy("example");
-        assertEquals("example/track", testClient.getEndPoint());
+        testHttpClient.setEndPointLegacy("example");
+        assertEquals("example/track", testHttpClient.getEndPoint());
     }
 
     @Test
@@ -69,8 +79,8 @@ public class RakeHttpClientSpec {
         MockWebServer server = new MockWebServer();
         server.start(9010);
 
-        testClient.setSocketTImeout(100);
-        testClient.send(Arrays.asList(new JSONObject()));
+        testHttpClient.setSocketTImeout(100);
+        testHttpClient.send(Arrays.asList(new JSONObject()));
 
         try {
             server.shutdown();
@@ -89,7 +99,7 @@ public class RakeHttpClientSpec {
         server.start(9010);
 
         RakeHttpClient httpClient  =
-                new RakeHttpClient(new SampleDevConfig(), RakeHttpClient.ContentType.URL_ENCODED_FORM);
+                new RakeHttpClient(devConfig, RakeHttpClient.ContentType.URL_ENCODED_FORM);
 
         httpClient.setEndPoint(TEST_MODE_ENDPOINT);
         httpClient.send(Arrays.asList(new JSONObject()));
@@ -111,7 +121,7 @@ public class RakeHttpClientSpec {
         server.start(9010);
 
         RakeHttpClient httpClient  =
-                new RakeHttpClient(new SampleDevConfig(), RakeHttpClient.ContentType.JSON);
+                new RakeHttpClient(devConfig, RakeHttpClient.ContentType.JSON);
 
         httpClient.setEndPoint(TEST_MODE_ENDPOINT);
         httpClient.send(Arrays.asList(new JSONObject()));
