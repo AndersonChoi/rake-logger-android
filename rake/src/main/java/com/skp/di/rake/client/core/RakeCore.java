@@ -87,12 +87,22 @@ public class RakeCore {
                           Scheduler persistScheduler,
                           Scheduler networkScheduler,
                           Observer<List<JSONObject>> observer) {
-        startWithDefaultCore()
-                .withTimer(config.getFlushIntervalAsMilliseconds())
-                .withPersistence(persistScheduler)
-                .withNetworking(networkScheduler)
-                .withRetry(persistScheduler)
-                .endWithObserver(observer);
+
+        if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode()) {
+            startWithDefaultCore()
+                    /* without timer */
+                    /* without persistence */
+                    .withNetworking(networkScheduler)
+                    .withRetry(persistScheduler)
+                    .endWithObserver(observer);
+        } else { /* LIVE */
+            startWithDefaultCore()
+                    .withTimer(config.getFlushIntervalAsMilliseconds())
+                    .withPersistence(persistScheduler)
+                    .withNetworking(networkScheduler)
+                    .withRetry(persistScheduler)
+                    .endWithObserver(observer);
+        }
 
         // TODO send metric in network scheduler
         // TODO compute metric in persist scheduler
@@ -118,34 +128,33 @@ public class RakeCore {
         core = core
                 .observeOn(persistScheduler) /* dao access in IO thread */
                 .map(nullOrJsonList -> {
-                    /* if null == nullOrJson, timer was fired or flush was commanded */
-                    /* dao.add return -1, if the parameter is null */
-                    int totalCount = dao.add(nullOrJsonList);
+                    int totalCount = -1;
 
-                    if (totalCount != -1 /* if track */) {
+                    if (null != nullOrJsonList /* if track */) {
                         debugLogger.i("Persisting Thread: " + Thread.currentThread().getName());
+                        totalCount = dao.add(nullOrJsonList);
                     }
 
-                    if (-1 == totalCount /* timer was fired or, flush was commanded */
-                            || totalCount >= config.getMaxLogTrackCount() /* persistence is full */
-                            || RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode()) /* dev mode */ {
+                    if (null == nullOrJsonList /* timer or flush */
+                        || totalCount >= config.getMaxLogTrackCount()) { /* dao is full */
                         return dao.getAndRemoveOldest(config.getMaxLogTrackCount());
                     }
 
                     /* track is called, but persistence is not full  */
                     return null;
-                }).filter(nullOrJsonList -> null != nullOrJsonList);
+                });
 
         return this;
     }
 
     private RakeCore withNetworking(Scheduler networkScheduler) {
         core = core
+                .filter(nullOrJsonList -> null != nullOrJsonList) /* must filter null */
                 .observeOn(networkScheduler) /* network operation in another IO thread */
                 .map(tracked -> {
                     debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
                     debugLogger.i("sent log count: " + tracked.size());
-                    return client.send(tracked); /* return response. it might be null */
+                    return client.send(tracked); /* return tracked if failed, otherwise return null */
                 });
 
         return this;
@@ -155,8 +164,12 @@ public class RakeCore {
     private RakeCore withRetry(Scheduler persistScheduler) {
         core = core
                 .map(failed -> {
-                    // TODO metric,, write retry tests
-                    dao.add(failed);
+                    /* iff failed */
+                    if (null != failed) {
+                        // TODO metric,, write retry tests
+                        dao.add(failed);
+                    }
+
                     // TODO returning meaningful things
                     return null;
                 });
@@ -166,10 +179,10 @@ public class RakeCore {
 
     private void endWithObserver(Observer<List<JSONObject>> observer) {
         coreSubscription = core
-                .onErrorReturn(t -> {
+                .onErrorResumeNext(t -> {
                     // TODO: onErrorReturn
                     // TODO metric
-                    RakeLogger.e("exception occurred. onErrorReturn", t);
+                    RakeLogger.e("onErrorResumeNext exception occurred. ", t);
                     return null;
                 })
                 .subscribe(observer); // TODO subscribeOn or observeOn
@@ -188,6 +201,11 @@ public class RakeCore {
     }
 
     public void setFlushInterval(long milliseconds) {
+        if (RakeUserConfig.RUNNING_ENV.DEV == this.config.getRunningMode()) {
+            debugLogger.i("setFlushInterval is not supported in `RUNNING_ENV.DEV`.");
+            return;
+        }
+
         if (null != intervalSubscription && ! intervalSubscription.isUnsubscribed()) {
             stop.onNext(null); /* stop command */
             intervalSubscription.unsubscribe();
@@ -203,19 +221,20 @@ public class RakeCore {
                     this.timer.onNext(null);
                     return x;
                 })
-                .onErrorReturn(t -> null) /* ignore timer errors */
+                .onErrorResumeNext(t -> null) /* ignore timer errors */
                 .subscribe(new Observer<Object>() {
                     @Override
                     public void onCompleted() {
-                        debugLogger.i("Timer interval refreshed. This timer will be perished");
+                        debugLogger.i("Old timer will be perished.");
                     }
 
                     @Override
-                    public void onError(Throwable e) { /* do nothing */ }
+                    public void onError(Throwable e) {
+                        debugLogger.i("onError in Observable.Interval for timer ");
+                    }
 
                     @Override
-                    public void onNext(Object o) {
-                    }
+                    public void onNext(Object o) { /* do nothing */ }
                 });
     }
 

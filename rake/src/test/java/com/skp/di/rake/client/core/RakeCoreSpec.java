@@ -83,7 +83,8 @@ public class RakeCoreSpec {
 
     @Test
     public void test_Auto_Flush_When_Persistence_Is_Full() {
-        for (int i = 0; i < liveConfig.getMaxLogTrackCount(); i++) liveCore.track(log);
+        for (int i = 0; i < liveConfig.getMaxLogTrackCount(); i++)
+            liveCore.track(log);
 
         verify(liveObserver, times(1)).onNext(any());
         verify(liveObserver, never()).onError(any());
@@ -98,14 +99,14 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void test_CoreWithDevConfig_Should_Flush_When_Track_Is_Called() {
+    public void test_RakeCore_With_DevConfig_Should_Flush_When_Track_Is_Called() {
         devCore.track(log);
 
         verify(devObserver, times(1)).onNext(any());
     }
 
     @Test
-    public void test_SetFlushInterval() throws InterruptedException {
+    public void test_setFlushInterval() throws InterruptedException {
         int interval1 = 100;
         int expectedOnNextCallNumberOnTimer1 = 2;
 
