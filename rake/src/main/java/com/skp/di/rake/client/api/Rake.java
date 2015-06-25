@@ -42,9 +42,9 @@ public class Rake {
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackable = ShuttleProtocol.getTrackable(shuttle, superProperties, defaultProperties);
         } catch (JSONException e) {
-            RakeLogger.e("Can't build trackable", e);
+            debugLogger.e("Can't build trackable", e);
         } catch (Exception e) {
-            RakeLogger.e("Can't build trackable. Due to invalid shuttle", e);
+            debugLogger.e("Can't build trackable. Due to invalid shuttle", e);
         }
 
         if (null != trackable) core.track(trackable);
@@ -126,7 +126,7 @@ public class Rake {
                     this.superProperties.put(key, superProps.get(key));
                 }
             } catch (JSONException e) {
-                RakeLogger.e("Can't add super property", e);
+                debugLogger.e("Can't add super property", e);
             }
         }
 
@@ -169,7 +169,7 @@ public class Rake {
             try {
                 superProperties = new JSONObject(props);
             } catch (JSONException e) {
-                RakeLogger.e("Cannot parse stored superProperties", e);
+                debugLogger.e("Cannot parse stored superProperties", e);
                 superProperties = new JSONObject();
                 clearPreferences();
             }

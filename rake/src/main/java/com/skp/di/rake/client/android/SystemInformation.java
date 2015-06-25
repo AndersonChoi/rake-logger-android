@@ -177,9 +177,9 @@ public class SystemInformation {
 
             zf.close();
         } catch(PackageManager.NameNotFoundException e) {
-            RakeLogger.e("System information constructed with a context that apparently doesn't exist.", e);
+            RakeLogger.error("System information constructed with a context that apparently doesn't exist.", e);
         } catch(IOException e) {
-            RakeLogger.e("Can't create ZipFile Instance using given ApplicationInfo", e);
+            RakeLogger.error("Can't create ZipFile Instance using given ApplicationInfo", e);
         }
 
         return buildDate;

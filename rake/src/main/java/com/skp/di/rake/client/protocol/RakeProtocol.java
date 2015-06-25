@@ -111,19 +111,19 @@ public class RakeProtocol {
             verifyStatusCode(statusCode);
             verifyErrorCode(responseBody);
         } catch (RakeProtocolBrokenException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         } catch (InsufficientJsonFieldException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         } catch (InvalidJsonSyntaxException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         } catch (NotRegisteredRakeTokenException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         } catch (WrongRakeTokenUsageException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         } catch (InvalidEndPointException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         } catch (InternalServerErrorException e) {
-            RakeLogger.e(e);
+            RakeLogger.error(e);
         }
     }
 

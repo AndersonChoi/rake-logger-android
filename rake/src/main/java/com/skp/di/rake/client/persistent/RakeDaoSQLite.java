@@ -95,7 +95,7 @@ public class RakeDaoSQLite implements RakeDao {
             c.moveToFirst();
             count = c.getInt(0);
         } catch (SQLiteException e) {
-            RakeLogger.e("Add failed", e);
+            debugLogger.e("Add failed", e);
 
             // We assume that in general, the results of a SQL exception are
             // unrecoverable, and could be associated with an oversized or
@@ -119,7 +119,7 @@ public class RakeDaoSQLite implements RakeDao {
         try {
             db.delete(tableName, KEY_CREATED_AT + " <= " + time, null);
         } catch (SQLiteException e) {
-            RakeLogger.e("Clean up event time failed. Delete DB.", e);
+            debugLogger.e("Clean up event time failed. Delete DB.", e);
 
             // We assume that in general, the results of a SQL exception are
             // unrecoverable, and could be associated with an oversized or
@@ -152,7 +152,7 @@ public class RakeDaoSQLite implements RakeDao {
                     result.add(json);
                 } catch (JSONException e) {
                     // TODO metric, failed count
-                    RakeLogger.e("Failed to convert stored String into JSONObject: " + storedJsonString, e);
+                    debugLogger.e("Failed to convert stored String into JSONObject: " + storedJsonString, e);
                 }
             }
 
@@ -160,7 +160,7 @@ public class RakeDaoSQLite implements RakeDao {
 
         } catch (SQLiteException e) {
             // TODO metric, failed count
-            RakeLogger.e("Clear Oldest N log failed.", e);
+            debugLogger.e("Clear Oldest N log failed.", e);
 
             // We'll dump the DB on write failures, but with reads we can
             // let things ride in hopes the issue clears up.
@@ -186,7 +186,7 @@ public class RakeDaoSQLite implements RakeDao {
             cursor = db.rawQuery(QUERY_GET_COUNT, null);
             count = cursor.getCount();
         } catch(SQLiteException e) {
-            RakeLogger.e("Can't get count due to", e);
+            debugLogger.e("Can't get count due to", e);
             dbHelper.close();
 
             if (null != cursor) cursor.close();

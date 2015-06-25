@@ -5,6 +5,7 @@ import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.RakeException;
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 import com.skp.di.rake.client.utils.RakeLogger;
+import com.skp.di.rake.client.utils.RakeLoggerFactory;
 import com.skp.di.rake.client.utils.StringUtils;
 
 import org.apache.http.HttpEntity;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.List;
@@ -53,6 +55,7 @@ public class RakeHttpClient {
     static public final int DEFAULT_SOCKET_TIMEOUT = 120000;
     private int connectionTimeout;
     private int socketTimeout;
+    private RakeLogger debugLogger;
 
     public void setEndPoint(String endPoint) { this.endPoint = endPoint; }
     /* to support legacy api `setRakeServer` */
@@ -68,6 +71,7 @@ public class RakeHttpClient {
     public RakeHttpClient(RakeUserConfig config, ContentType contentType) {
         this.config = config;
         this.contentType = contentType;
+        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode())
             endPoint = DEV_MODE_ENDPOINT;
@@ -84,43 +88,50 @@ public class RakeHttpClient {
 
         if (null == tracked || 0 == tracked.size()) return null;
 
-        String responseBody = null;
+        boolean retry = false;
 
         try {
             HttpResponse res = executePost(tracked);
-            responseBody = convertHttpResponseToString(res);
 
             int statusCode = res.getStatusLine().getStatusCode();
-            verifyResponse(statusCode, responseBody);
+            String responseBody = convertHttpResponseToString(res);
+
+            // TODO strategy
+            if (ContentType.JSON == contentType) {
+                verifyResponse(statusCode, responseBody);
+            }
 
         } catch(UnsupportedEncodingException e) {
-            RakeLogger.e("Cant' build StringEntity using body", e);
+            debugLogger.e("Cant' build StringEntity using body", e);
         } catch(JSONException e) {
-            RakeLogger.e("Can't build RakeRequestBody", e);
+            debugLogger.e("Can't build RakeRequestBody", e);
         } catch(ClientProtocolException e) {
-            RakeLogger.e("Invalid Network Protocol", e);
+            debugLogger.e("Invalid Network Protocol", e);
         } catch (SocketTimeoutException e) {
-            // TODO Retry
-            RakeLogger.e("Socket timeout occurred", e);
+            debugLogger.e("Socket timeout occurred", e);
+            retry = true;
         } catch (ConnectTimeoutException e) {
-            // TODO Retry
-            RakeLogger.e("Connection timeout occurred", e);
+            debugLogger.e("Connection timeout occurred", e);
+            retry = true;
+        } catch(UnknownHostException e) {
+            debugLogger.e("No connected network", e);
+            retry = true;
         } catch (IOException e) {
-            // TODO Retry
-            RakeLogger.e("Can't send message to server", e);
+            debugLogger.e("Can't send message to server", e);
+            retry = true;
         } catch (RakeException e) {
             throw e; /* to support test */
         } catch(GeneralSecurityException e) {
-            RakeLogger.e("Can't build HttpsClient", e);
+            debugLogger.e("Can't build HttpsClient", e);
         } catch(OutOfMemoryError e) {
-            // TODO Retry
-            RakeLogger.e("Not enough memory", e);
+            debugLogger.e("Not enough memory", e);
+            retry = true;
         } catch (Exception e) {
-            RakeLogger.e("Uncaught exception occurred", e);
+            debugLogger.e("Uncaught exception occurred", e);
         }
 
         /* returning null means, there is no need to retry */
-        return null;
+        return (true == retry) ? tracked : null;
     }
 
     protected void verifyResponse(int statusCode, String responseBody) {

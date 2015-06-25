@@ -3,6 +3,7 @@ package com.skp.di.rake.client.core;
 
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
+import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
 import com.skp.di.rake.client.utils.RakeTestUtils;
@@ -10,13 +11,17 @@ import com.skp.di.rake.client.utils.RakeTestUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import rx.Observable;
 import rx.Observer;
@@ -31,6 +36,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest=Config.NONE)
@@ -44,8 +50,9 @@ public class RakeCoreSpec {
     Observer<List<JSONObject>> liveObserver;
     RakeUserConfig liveConfig = RakeTestUtils.createLiveConfig1();
 
-    int count = liveConfig.getMaxLogTrackCount();
     JSONObject log;
+    int failedCount;
+    Random r;
 
     @Before
     public void setUp() throws JSONException {
@@ -69,6 +76,10 @@ public class RakeCoreSpec {
                 RakeTestUtils.createMockHttpClient(liveConfig), liveConfig);
         liveObserver = mock(Observer.class);
         liveCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), liveObserver);
+
+        /* withRetry */
+        failedCount = 0;
+        r = new Random(new Date().getTime());
     }
 
     @Test
@@ -112,15 +123,39 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void test_devCore_retry() {
+    public void test_RakeCore_withRetry_when_RUNNING_MODE_is_DEV() throws InterruptedException {
         RakeDao dao = new RakeDaoMemory();
-//        RakeHttpClient randomFailureClient() = ;
-        // TODO 6.25
-    }
+        RakeHttpClient unstableClient = mock(RakeHttpClient.class);
 
-    @Test
-    public void test_liveCore_retry() {
-        // TODO 6.25
+        when(unstableClient.send(any())).then(x -> {
+            /* randomly generate failure */
+            if (r.nextBoolean()) { /* failed */
+                failedCount += 1;
+                return x.getArgumentAt(0, List.class);
+            }
+
+            /* success */
+            return null;
+        });
+
+        Observer<List<JSONObject>> observer = mock(Observer.class);
+
+        RakeCore testCore = RakeTestUtils.createTestRakeCore(
+                dao,
+                unstableClient,
+                RakeTestUtils.createDevConfig1(),
+                observer);
+
+        testCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), observer);
+
+        int count = 10;
+        for (int i = 0; i < count; i++) testCore.track(new JSONObject());
+
+        // make sure all log is sent
+        assertEquals(0, dao.getCount());
+
+        // verify whether all failed log were retried or not
+        verify(observer, times(count + failedCount)).onNext(any());
     }
 
     @Test

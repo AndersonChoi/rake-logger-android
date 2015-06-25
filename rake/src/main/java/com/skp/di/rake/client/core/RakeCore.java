@@ -62,12 +62,14 @@ public class RakeCore {
         this.metricObserver = new Observer<List<JSONObject>>() {
             @Override
             public void onCompleted() {
-                debugLogger.i("RakeCore onCompleted");
+                debugLogger.i("RakeCore.onCompleted");
+                resubscribeCore();
             }
 
             @Override
             public void onError(Throwable t) {
                 debugLogger.e("RakeCore.onError", t);
+                resubscribeCore();
             }
 
             @Override
@@ -81,6 +83,13 @@ public class RakeCore {
         // merging flushable, trackable, timer with
         // schedulers that define which thread will be used
         buildCore(config, persistScheduler, networkScheduler, metricObserver);
+    }
+
+    private void resubscribeCore() {
+        if (null != coreSubscription && !coreSubscription.isUnsubscribed())
+            coreSubscription.unsubscribe();
+
+        coreSubscription = core.subscribe(this.metricObserver);
     }
 
     private void buildCore(RakeUserConfig config,
@@ -136,7 +145,7 @@ public class RakeCore {
                     }
 
                     if (null == nullOrJsonList /* timer or flush */
-                        || totalCount >= config.getMaxLogTrackCount()) { /* dao is full */
+                            || totalCount >= config.getMaxLogTrackCount()) { /* dao is full */
                         return dao.getAndRemoveOldest(config.getMaxLogTrackCount());
                     }
 
@@ -166,8 +175,9 @@ public class RakeCore {
                 .map(failed -> {
                     /* iff failed */
                     if (null != failed) {
-                        // TODO metric,, write retry tests
-                        dao.add(failed);
+                        // TODO metric
+                        debugLogger.i("Failed. retrying log count: " + failed.size());
+                        track(failed);
                     }
 
                     // TODO returning meaningful things
@@ -179,12 +189,6 @@ public class RakeCore {
 
     private void endWithObserver(Observer<List<JSONObject>> observer) {
         coreSubscription = core
-                .onErrorResumeNext(t -> {
-                    // TODO: onErrorReturn
-                    // TODO metric
-                    RakeLogger.e("onErrorResumeNext exception occurred. ", t);
-                    return null;
-                })
                 .subscribe(observer); // TODO subscribeOn or observeOn
     }
 
@@ -192,7 +196,13 @@ public class RakeCore {
         if (null == json) return;
 
         debugLogger.i("track called: \n" + json.toString());
-        trackable.onNext(Arrays.asList(json));
+        track(Arrays.asList(json));
+    }
+
+    private void track(List<JSONObject> jsons) {
+        if (null == jsons || 0 == jsons.size()) return;
+
+        trackable.onNext(jsons);
     }
 
     public void flush() {
@@ -239,9 +249,8 @@ public class RakeCore {
     }
 
     /* to support test */
-    public Observable<List<JSONObject>> getTimer() {
-        return timer;
-    }
+    public Observable<List<JSONObject>> getTimer() { return timer; }
+    public Observable<List<JSONObject>> getTrackable() { return timer; }
 
     /* to support test */
     public void setTestObserverAndScheduler(Scheduler s, Observer<List<JSONObject>> o) {
