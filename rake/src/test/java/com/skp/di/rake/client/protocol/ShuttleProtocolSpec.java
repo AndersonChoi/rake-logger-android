@@ -1,6 +1,5 @@
 package com.skp.di.rake.client.protocol;
 
-import com.skp.di.rake.client.mock.MockSystemInformation;
 import com.skp.di.rake.client.utils.RakeTestUtils;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
 
@@ -45,7 +44,8 @@ public class ShuttleProtocolSpec {
 
     @Test
     public void test_ShuttleProtocolCanReturn_extractedMetaAndProperties() throws JSONException {
-        JSONObject defaultProperties = MockSystemInformation.getDefaultProperties(RakeTestUtils.createDevConfig1());
+        JSONObject defaultProperties =
+                RakeTestUtils.createSampleDefaultProperties(RakeTestUtils.createDevConfig1());
         JSONObject trackable =
                 ShuttleProtocol.getTrackable(shuttle.toJSONObject(), emptySuperProps, defaultProperties);
 
@@ -62,7 +62,8 @@ public class ShuttleProtocolSpec {
 
     @Test
     public void test_TrackableHasValidDefaultProperties() throws JSONException {
-        JSONObject defaultProperties = MockSystemInformation.getDefaultProperties(RakeTestUtils.createDevConfig1());
+        JSONObject defaultProperties =
+                RakeTestUtils.createSampleDefaultProperties(RakeTestUtils.createDevConfig1());
         JSONObject trackable = ShuttleProtocol.getTrackable(shuttle.toJSONObject(), emptySuperProps, defaultProperties);
 
         JSONObject properties = trackable.getJSONObject(ShuttleProtocol.FIELD_NAME_PROPERTIES);

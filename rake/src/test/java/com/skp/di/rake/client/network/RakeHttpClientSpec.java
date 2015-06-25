@@ -2,7 +2,6 @@ package com.skp.di.rake.client.network;
 
 
 import com.skp.di.rake.client.api.RakeUserConfig;
-import com.skp.di.rake.client.mock.MockRakeHttpClient;
 import com.skp.di.rake.client.protocol.RakeProtocol;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
@@ -22,7 +21,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
-import com.skp.di.rake.client.mock.MockServer;
 import com.skp.di.rake.client.utils.RakeTestUtils;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -52,7 +50,7 @@ public class RakeHttpClientSpec {
                 10000, 5
         );
 
-        mockClient  = new MockRakeHttpClient(devConfig);
+        mockClient  = RakeTestUtils.createMockHttpClient(devConfig);
 
         testHttpClient = new RakeHttpClient(
                 RakeTestUtils.createDevConfig1(),
@@ -135,51 +133,51 @@ public class RakeHttpClientSpec {
 
     @Test(expected= InsufficientJsonFieldException.class)
     public void test_InsufficientJsonFieldException() {
-        MockServer.setErrorCode(RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= InvalidJsonSyntaxException.class)
     public void test_InvalidJsonSyntaxException() {
-        MockServer.setErrorCode(RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= NotRegisteredRakeTokenException.class)
     public void test_NotRegisteredRakeTokenException() {
-        MockServer.setErrorCode(RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= WrongRakeTokenUsageException.class)
     public void test_WrongRakeTokenUsageException() {
-        MockServer.setErrorCode(RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= InvalidEndPointException.class)
     public void test_InvalidEndPointException() {
-        MockServer.setErrorCode(RakeProtocol.ERROR_CODE_INVALID_END_POINT);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INVALID_END_POINT);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= InternalServerErrorException.class)
     public void test_InternalServerErrorException() {
-        MockServer.setErrorCode(RakeProtocol.ERROR_CODE_INTERNAL_SERVER_ERROR);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INTERNAL_SERVER_ERROR);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= RakeProtocolBrokenException.class)
     public void test_RakeProtocolBrokenExceptionWhenServerReturnInvalidJsonFormat() {
         /* mock server will return invalid json format */
-        MockServer.setErrorCode(MockServer.ERROR_CODE_RAKE_PROTOCOL_BROKEN);
+        RakeTestUtils.setErrorCodeOnMockServer(RakeTestUtils.getErorCodeWhenRakeProtocolBroken());
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
     @Test(expected= RakeProtocolBrokenException.class)
     public void test_RakeProtocolBrokenExceptionWhenServerReturnInvalidErrorAndStatusCode() {
         /* mock server will return undefined error code and status code */
-        MockServer.setErrorCode(909014);
+        RakeTestUtils.setErrorCodeOnMockServer(909014);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 }

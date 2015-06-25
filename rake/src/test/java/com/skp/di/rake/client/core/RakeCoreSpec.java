@@ -3,7 +3,6 @@ package com.skp.di.rake.client.core;
 
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
-import com.skp.di.rake.client.mock.MockRakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
 import com.skp.di.rake.client.utils.RakeTestUtils;
@@ -21,7 +20,6 @@ import java.util.List;
 
 import rx.Observable;
 import rx.Observer;
-import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 
 import static org.junit.Assert.assertEquals;
@@ -56,11 +54,19 @@ public class RakeCoreSpec {
         log = new JSONObject();
         log.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
 
-        devCore  = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(devConfig), devConfig);
         devObserver = mock(Observer.class);
+        devCore  = RakeTestUtils.createTestRakeCore(
+                new RakeDaoMemory(),
+                RakeTestUtils.createMockHttpClient(devConfig),
+                devConfig,
+                devObserver
+        );
+
         devCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), devObserver);
 
-        liveCore = new RakeCore(new RakeDaoMemory(), new MockRakeHttpClient(liveConfig), liveConfig);
+        liveCore = new RakeCore(
+                new RakeDaoMemory(),
+                RakeTestUtils.createMockHttpClient(liveConfig), liveConfig);
         liveObserver = mock(Observer.class);
         liveCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), liveObserver);
     }
@@ -106,6 +112,18 @@ public class RakeCoreSpec {
     }
 
     @Test
+    public void test_devCore_retry() {
+        RakeDao dao = new RakeDaoMemory();
+//        RakeHttpClient randomFailureClient() = ;
+        // TODO 6.25
+    }
+
+    @Test
+    public void test_liveCore_retry() {
+        // TODO 6.25
+    }
+
+    @Test
     public void test_setFlushInterval() throws InterruptedException {
         int interval1 = 100;
         int expectedOnNextCallNumberOnTimer1 = 2;
@@ -119,20 +137,17 @@ public class RakeCoreSpec {
                         "example liveToken", "exampleDevToken",
                         interval1, 10);
 
-        Observer<List<JSONObject>> testCoreObserver = mock(Observer.class);
-        RakeCore testCore = createRakeCore(config, testCoreObserver);
-
         /* since we can't test full data flow chain due to filtering null dao
            we will test timer (PublishSubject) only.
           */
-        Observable<List<JSONObject>> timer = testCore.getTimer();
+        Observable<List<JSONObject>> timer = liveCore.getTimer();
         Observer<List<JSONObject>> timerObserver = mock(Observer.class);
 
         timer.subscribe(timerObserver);
 
         Thread.sleep(interval1 * expectedOnNextCallNumberOnTimer1 + interval1 / 2);
 
-        testCore.setFlushInterval(interval2);
+        liveCore.setFlushInterval(interval2);
 
         Thread.sleep(interval2 * expectedOnNextCallNumberOnTimer2 + interval2 / 2);
 
@@ -142,14 +157,5 @@ public class RakeCoreSpec {
         // we need to add +1 to total number
         total += 1;
         verify(timerObserver, times(total)).onNext(any());
-    }
-
-    public RakeCore createRakeCore(RakeUserConfig config, Observer<List<JSONObject>> o) {
-        RakeDao dao = new RakeDaoMemory();
-        MockRakeHttpClient client = new MockRakeHttpClient(config);
-        Scheduler s = AndroidSchedulers.mainThread();
-
-        RakeCore core = new RakeCore(dao, client, config);
-        return core;
     }
 }

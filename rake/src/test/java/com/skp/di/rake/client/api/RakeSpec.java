@@ -5,7 +5,6 @@ import android.util.Log;
 import com.skp.di.rake.client.android.SystemInformation;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.core.RakeCore;
-import com.skp.di.rake.client.mock.MockSystemInformation;
 import com.skp.di.rake.client.protocol.ShuttleProtocol;
 import com.skp.di.rake.client.utils.RakeTestUtils;
 import com.skplanet.pdp.sentinel.shuttle.AppSampleSentinelShuttle;
@@ -57,7 +56,8 @@ public class RakeSpec {
 
         mockSysInfo = mock(SystemInformation.class);
 
-        JSONObject mockDefaultProperties = MockSystemInformation.getDefaultProperties(config);
+        JSONObject mockDefaultProperties =
+                RakeTestUtils.createSampleDefaultProperties(config);
         when(mockSysInfo.getDefaultProperties(config)).thenReturn(mockDefaultProperties);
 
         rake = new Rake(config, mockCore, ShadowApplication.getInstance().getApplicationContext(), mockSysInfo);
