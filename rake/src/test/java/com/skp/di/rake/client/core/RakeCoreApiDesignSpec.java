@@ -2,6 +2,7 @@ package com.skp.di.rake.client.core;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -74,9 +75,9 @@ public class RakeCoreApiDesignSpec {
 
         intervalSubscription = Observable
                 .interval(milliseconds, TimeUnit.MILLISECONDS)
-                .map(anyThing -> {
+                .map(anything -> {
                     timer.onNext(null);
-                    return anyThing;
+                    return anything;
                 })
                 // TODO onErrorReturn, Observer
                 .subscribe(o);

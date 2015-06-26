@@ -13,12 +13,12 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -69,13 +69,12 @@ public class RakeCoreSpec {
                 devObserver
         );
 
-        devCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), devObserver);
-
-        liveCore = new RakeCore(
-                new RakeDaoMemory(),
-                RakeTestUtils.createMockHttpClient(liveConfig), liveConfig);
         liveObserver = mock(Observer.class);
-        liveCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), liveObserver);
+        liveCore = RakeTestUtils.createTestRakeCore(
+                new RakeDaoMemory(),
+                RakeTestUtils.createMockHttpClient(liveConfig),
+                liveConfig,
+                liveObserver);
 
         /* withRetry */
         failedCount = 0;
@@ -85,11 +84,30 @@ public class RakeCoreSpec {
     @Test
     public void test_LiveCore_Should_Not_Flush() throws InterruptedException {
         for (int i = 0; i < liveConfig.getMaxLogTrackCount() - 1; i++) liveCore.track(log);
+
         verify(liveObserver, never()).onNext(any());
     }
 
     @Test
-    public void test_Not_To_fLush_Immediately_When_Live_Env() {
+    public void test_LiveCore_Should_Not_To_Flush_When_Empty() {
+        liveCore.flush();
+
+
+        verify(liveObserver, never()).onNext(any());
+        verify(liveObserver, never()).onError(any());
+    }
+
+    @Test
+    public void test_LiveCore_Auto_Flush_When_Persistence_Is_Full() {
+        for (int i = 0; i < liveConfig.getMaxLogTrackCount(); i++)
+            liveCore.track(log);
+
+        verify(liveObserver, times(1)).onNext(any());
+        verify(liveObserver, never()).onError(any());
+    }
+
+    @Test
+    public void test_LiveCore_Should_Not_To_Flush_Immediately() {
         liveCore.track(log);
         verify(liveObserver, never()).onNext(any());
 
@@ -99,31 +117,26 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void test_Auto_Flush_When_Persistence_Is_Full() {
-        for (int i = 0; i < liveConfig.getMaxLogTrackCount(); i++)
-            liveCore.track(log);
-
-        verify(liveObserver, times(1)).onNext(any());
-        verify(liveObserver, never()).onError(any());
-    }
-
-    @Test
-    public void test_Not_To_Flush_When_Empty() {
-        liveCore.flush();
-
-        verify(liveObserver, never()).onNext(any());
-        verify(liveObserver, never()).onError(any());
-    }
-
-    @Test
-    public void test_RakeCore_With_DevConfig_Should_Flush_When_Track_Is_Called() {
+    public void test_DevCore_Should_Send_When_Track_Is_Called() {
         devCore.track(log);
 
         verify(devObserver, times(1)).onNext(any());
     }
 
     @Test
-    public void test_RakeCore_withRetry_when_RUNNING_MODE_is_DEV() throws InterruptedException {
+    public void test_DevCore_Should_Disable_Flush_Command() {
+        Observable<RakeCore.Command> flushStream = devCore.getFlushStream();
+        Observer<RakeCore.Command> o = mock(Observer.class);
+
+        flushStream.subscribe(o);
+        devCore.flush();
+        devCore.flush();
+
+        verify(o, never()).onNext(any());
+    }
+
+    @Test
+    public void test_DevCore_withRetry() throws InterruptedException {
         RakeDao dao = new RakeDaoMemory();
         RakeHttpClient unstableClient = mock(RakeHttpClient.class);
 
@@ -146,8 +159,6 @@ public class RakeCoreSpec {
                 RakeTestUtils.createDevConfig1(),
                 observer);
 
-        testCore.setTestObserverAndScheduler(AndroidSchedulers.mainThread(), observer);
-
         int count = 10;
         for (int i = 0; i < count; i++) testCore.track(new JSONObject());
 
@@ -157,40 +168,40 @@ public class RakeCoreSpec {
         // verify whether all failed log were retried or not
         verify(observer, times(count + failedCount)).onNext(any());
     }
-
-    @Test
-    public void test_setFlushInterval() throws InterruptedException {
-        int interval1 = 100;
-        int expectedOnNextCallNumberOnTimer1 = 2;
-
-        int interval2 = 50; /* milliseconds */
-        int expectedOnNextCallNumberOnTimer2 = 5;
-
-        RakeUserConfig config =
-                RakeTestUtils.createRakeUserConfig(
-                        RakeUserConfig.RUNNING_ENV.LIVE,
-                        "example liveToken", "exampleDevToken",
-                        interval1, 10);
-
-        /* since we can't test full data flow chain due to filtering null dao
-           we will test timer (PublishSubject) only.
-          */
-        Observable<List<JSONObject>> timer = liveCore.getTimer();
-        Observer<List<JSONObject>> timerObserver = mock(Observer.class);
-
-        timer.subscribe(timerObserver);
-
-        Thread.sleep(interval1 * expectedOnNextCallNumberOnTimer1 + interval1 / 2);
-
-        liveCore.setFlushInterval(interval2);
-
-        Thread.sleep(interval2 * expectedOnNextCallNumberOnTimer2 + interval2 / 2);
-
-        // verify total call number of onNext()
-        int total = expectedOnNextCallNumberOnTimer1 + expectedOnNextCallNumberOnTimer2;
-        // because the interval observable startsWith(-1L),
-        // we need to add +1 to total number
-        total += 1;
-        verify(timerObserver, times(total)).onNext(any());
-    }
+//
+//    @Test
+//    public void test_setFlushInterval() throws InterruptedException {
+//        int interval1 = 100;
+//        int expectedOnNextCallNumberOnTimer1 = 2;
+//
+//        int interval2 = 50; /* milliseconds */
+//        int expectedOnNextCallNumberOnTimer2 = 5;
+//
+//        RakeUserConfig config =
+//                RakeTestUtils.createRakeUserConfig(
+//                        RakeUserConfig.RUNNING_ENV.LIVE,
+//                        "example liveToken", "exampleDevToken",
+//                        interval1, 10);
+//
+//        /* since we can't test full data flow chain due to filtering null dao
+//           we will test timer (PublishSubject) only.
+//          */
+//        Observable<RakeCore.Command> timer = liveCore.getTimer();
+//        Observer<RakeCore.Command> timerObserver = mock(Observer.class);
+//
+//        timer.subscribe(timerObserver);
+//
+//        Thread.sleep(interval1 * expectedOnNextCallNumberOnTimer1 + interval1 / 2);
+//
+//        liveCore.setFlushInterval(interval2);
+//
+//        Thread.sleep(interval2 * expectedOnNextCallNumberOnTimer2 + interval2 / 2);
+//
+//        // verify total call number of onNext()
+//        int total = expectedOnNextCallNumberOnTimer1 + expectedOnNextCallNumberOnTimer2;
+//        // because the interval observable startsWith(-1L),
+//        // we need to add +1 to total number
+//        total += 1;
+//        verify(timerObserver, times(total)).onNext(any());
+//    }
 }

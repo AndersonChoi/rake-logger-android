@@ -28,10 +28,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 import rx.Observer;
-import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.exceptions.OnErrorThrowable;
 
@@ -88,9 +86,9 @@ public class RakeTestUtils {
                                               RakeHttpClient client,
                                               RakeUserConfig config,
                                               Observer<List<JSONObject>> o) {
-        Scheduler s = AndroidSchedulers.mainThread();
-
         RakeCore core = new RakeCore(dao, client, config);
+        core.initialize(config, AndroidSchedulers.mainThread(), AndroidSchedulers.mainThread(), o);
+
         return core;
     }
 
@@ -171,10 +169,6 @@ public class RakeTestUtils {
 
     static public JSONObject createSampleDefaultProperties(RakeUserConfig config) throws JSONException {
         return MockSystemInformation.getDefaultProperties(config);
-    }
-
-    static public RakeHttpClient createUnstableHttpClient(RakeUserConfig config) {
-        return new UnstableHttpClient(config, RakeHttpClient.ContentType.URL_ENCODED_FORM);
     }
 }
 
@@ -299,26 +293,5 @@ class MockRakeHttpClient extends RakeHttpClient {
     protected void verifyResponse(int statusCode, String responseBody) {
         RakeProtocol.verifyStatusCode(statusCode);
         RakeProtocol.verifyErrorCode(responseBody);
-    }
-}
-
-class UnstableHttpClient extends RakeHttpClient {
-
-    Random r = new Random(new Date().getTime());
-
-    public UnstableHttpClient(RakeUserConfig config, ContentType contentType) {
-        super(config, contentType);
-    }
-
-    @Override
-    public List<JSONObject> send(List<JSONObject> tracked) {
-        if (null == tracked || 0 == tracked.size()) return null;
-
-        if (r.nextBoolean()) { /* failure */
-            System.out.println("UnstableHttpClient: failed");
-            return tracked;
-        }
-
-        return null; /* success */
     }
 }

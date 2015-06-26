@@ -63,14 +63,13 @@ public class RakeDaoSQLite implements RakeDao {
     }
 
     /* methods */
-
     public int add(JSONObject json) {
         if (null == json) return -1;
 
         return add(Arrays.asList(json));
     }
 
-    public int add(List<JSONObject> list) {
+    synchronized public int add(List<JSONObject> list) {
         if (null == list || 0 == list.size())
             return -1;
 
@@ -129,7 +128,7 @@ public class RakeDaoSQLite implements RakeDao {
         }
     }
 
-    public List<JSONObject> getAndRemoveOldest(int N) {
+    synchronized public List<JSONObject> getAndRemoveOldest(int N) {
         Cursor c = null;
         String tableName = RAKE_LOG_TABLE.getName();
         List<JSONObject> result = new ArrayList<>();
@@ -176,7 +175,7 @@ public class RakeDaoSQLite implements RakeDao {
     }
 
     @Override
-    public int getCount() {
+    synchronized public int getCount() {
         String QUERY_GET_COUNT = "SELECT * FROM " + RAKE_LOG_TABLE.getName();
         Cursor cursor = null;
         int count = -1;
@@ -196,7 +195,7 @@ public class RakeDaoSQLite implements RakeDao {
     }
 
     @Override
-    public void clear() {
+    synchronized public void clear() {
         dbHelper.dropDatabase();
     }
 }

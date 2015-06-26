@@ -11,6 +11,7 @@ public abstract class RakeUserConfig {
     abstract public boolean printDebugInfo();
 
     /* wrapping functions for readability */
+    public final boolean isDevelopment() { return RUNNING_ENV.DEV == getRunningMode(); }
     public final RUNNING_ENV getRunningMode() { return provideRunningMode(); }
     public final String getLiveToken() { return provideLiveToken();   }
     public final String getDevToken()  { return provideDevToken();    }

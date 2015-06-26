@@ -97,9 +97,9 @@ public class RakeHttpClient {
             String responseBody = convertHttpResponseToString(res);
 
             // TODO strategy
-            if (ContentType.JSON == contentType) {
+//            if (ContentType.JSON == contentType) {
                 verifyResponse(statusCode, responseBody);
-            }
+//            }
 
         } catch(UnsupportedEncodingException e) {
             debugLogger.e("Cant' build StringEntity using body", e);
@@ -160,8 +160,6 @@ public class RakeHttpClient {
 
         return response;
     }
-
-
 
     private String convertHttpResponseToString(HttpResponse hr) throws IOException {
         InputStream is = null;

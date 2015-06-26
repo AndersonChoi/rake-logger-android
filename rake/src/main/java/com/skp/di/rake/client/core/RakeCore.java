@@ -28,168 +28,45 @@ public class RakeCore {
     private RakeHttpClient client;
     private RakeUserConfig config;
 
-    private PublishSubject<List<JSONObject>> flushable;
     private PublishSubject<List<JSONObject>> trackable;
-    private PublishSubject<List<JSONObject>> timer;
+    private PublishSubject<Command> flushable;
     private PublishSubject<List<JSONObject>> stop; /* to stop `timer` */
-    private Observable<List<JSONObject>> core;
-    private Subscription intervalSubscription;
-    private Subscription coreSubscription;
-    private Observer<List<JSONObject>> metricObserver;
+
+    private Observable<Command> command;
+    private Observable<List<JSONObject>> stream;
+    private Subscription timerSubscription;
+    private Subscription streamSubscription;
+    private Observer<List<JSONObject>> streamObserver;
+    private Observer<Long> timerObserver;
 
     private Scheduler persistScheduler;
     private Scheduler networkScheduler;
 
     private RakeLogger debugLogger;
 
+    public enum Command {
+        TIMER_FIRED, FLUSHED, TRACK_FULL, TRACK_NOT_FULL
+    }
+
     public RakeCore(RakeDao dao,
                     RakeHttpClient client,
                     RakeUserConfig config) {
         this.dao    = dao;
         this.client = client;
-        this.config = config;
         this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         this.flushable = PublishSubject.create();
         this.trackable = PublishSubject.create();
-        this.timer = PublishSubject.create();
         this.stop = PublishSubject.create();
-        this.intervalSubscription = null;
+        this.timerSubscription = null;
 
+        this.config = config;
         this.persistScheduler = Schedulers.computation(); /* usually Schedulers.computation() */
         this.networkScheduler = Schedulers.io(); /* usually Schedulers.io() */
+        this.streamObserver = createStreamObserver();
+        this.timerObserver = createTimerObserver();
 
-        this.metricObserver = new Observer<List<JSONObject>>() {
-            @Override
-            public void onCompleted() {
-                debugLogger.i("RakeCore.onCompleted");
-                resubscribeCore();
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                debugLogger.e("RakeCore.onError", t);
-                resubscribeCore();
-            }
-
-            @Override
-            public void onNext(List<JSONObject> metric) {
-                if (null == metric) return;
-                debugLogger.i("Observer Thread: " + Thread.currentThread().getName());
-                debugLogger.i("metric: " + metric.toString());
-            }
-        };
-
-        // merging flushable, trackable, timer with
-        // schedulers that define which thread will be used
-        buildCore(config, persistScheduler, networkScheduler, metricObserver);
-    }
-
-    private void resubscribeCore() {
-        if (null != coreSubscription && !coreSubscription.isUnsubscribed())
-            coreSubscription.unsubscribe();
-
-        coreSubscription = core.subscribe(this.metricObserver);
-    }
-
-    private void buildCore(RakeUserConfig config,
-                          Scheduler persistScheduler,
-                          Scheduler networkScheduler,
-                          Observer<List<JSONObject>> observer) {
-
-        if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode()) {
-            startWithDefaultCore()
-                    /* without timer */
-                    /* without persistence */
-                    .withNetworking(networkScheduler)
-                    .withRetry(persistScheduler)
-                    .endWithObserver(observer);
-        } else { /* LIVE */
-            startWithDefaultCore()
-                    .withTimer(config.getFlushIntervalAsMilliseconds())
-                    .withPersistence(persistScheduler)
-                    .withNetworking(networkScheduler)
-                    .withRetry(persistScheduler)
-                    .endWithObserver(observer);
-        }
-
-        // TODO send metric in network scheduler
-        // TODO compute metric in persist scheduler
-    }
-
-    private RakeCore startWithDefaultCore() {
-        if (null != coreSubscription && !coreSubscription.isUnsubscribed())
-            coreSubscription.unsubscribe();
-
-        core = trackable.mergeWith(flushable);
-
-        return this;
-    }
-
-    private RakeCore withTimer(long flushInterval /* milliseconds */) {
-        setFlushInterval(flushInterval);
-        core = core.mergeWith(timer);
-
-        return this;
-    }
-
-    private RakeCore withPersistence(Scheduler persistScheduler) {
-        core = core
-                .observeOn(persistScheduler) /* dao access in IO thread */
-                .map(nullOrJsonList -> {
-                    int totalCount = -1;
-
-                    if (null != nullOrJsonList /* if track */) {
-                        debugLogger.i("Persisting Thread: " + Thread.currentThread().getName());
-                        totalCount = dao.add(nullOrJsonList);
-                    }
-
-                    if (null == nullOrJsonList /* timer or flush */
-                            || totalCount >= config.getMaxLogTrackCount()) { /* dao is full */
-                        return dao.getAndRemoveOldest(config.getMaxLogTrackCount());
-                    }
-
-                    /* track is called, but persistence is not full  */
-                    return null;
-                });
-
-        return this;
-    }
-
-    private RakeCore withNetworking(Scheduler networkScheduler) {
-        core = core
-                .filter(nullOrJsonList -> null != nullOrJsonList) /* must filter null */
-                .observeOn(networkScheduler) /* network operation in another IO thread */
-                .map(tracked -> {
-                    debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
-                    debugLogger.i("sent log count: " + tracked.size());
-                    return client.send(tracked); /* return tracked if failed, otherwise return null */
-                });
-
-        return this;
-    }
-
-    /* retry means that persisting all failed log into SQLite */
-    private RakeCore withRetry(Scheduler persistScheduler) {
-        core = core
-                .map(failed -> {
-                    /* iff failed */
-                    if (null != failed) {
-                        // TODO metric
-                        debugLogger.i("Failed. retrying log count: " + failed.size());
-                        track(failed);
-                    }
-
-                    // TODO returning meaningful things
-                    return null;
-                });
-
-        return this;
-    }
-
-    private void endWithObserver(Observer<List<JSONObject>> observer) {
-        coreSubscription = core
-                .subscribe(observer); // TODO subscribeOn or observeOn
+        initialize(config, persistScheduler, networkScheduler, streamObserver);
     }
 
     public void track(JSONObject json) {
@@ -207,53 +84,181 @@ public class RakeCore {
 
     public void flush() {
         debugLogger.i("flush called");
-        flushable.onNext(null);
+        flushable.onNext(Command.FLUSHED);
+    }
+
+    public void initialize(RakeUserConfig config,
+                           Scheduler persistScheduler,
+                           Scheduler networkScheduler,
+                           Observer<List<JSONObject>> streamObserver) {
+
+        /* important: variables below are used in all over the class, so always renew these variables */
+        this.config = config;
+        this.persistScheduler = persistScheduler;
+        this.networkScheduler = networkScheduler;
+        this.streamObserver = streamObserver;
+
+        if (null != streamSubscription && !streamSubscription.isUnsubscribed())
+            streamSubscription.unsubscribe();
+
+        stream =
+                /* composed of track, flush, timer stream */
+                createLogStream()
+
+                /* enable networking */
+                .observeOn(networkScheduler) /* network operation in another IO thread */
+                .filter(nullOrJsonList -> null != nullOrJsonList) /* must filter null */
+                .map(tracked -> {
+                    debugLogger.i("Networking Thread: " + Thread.currentThread().getName());
+                    debugLogger.i("Sent log count: " + tracked.size());
+                    return client.send(tracked); /* return tracked if failed, otherwise return null */
+                })
+
+                /* retry */
+                .map(failed -> {
+                    /* iff failed */
+                    if (null != failed) {
+                        // TODO metric
+                        debugLogger.i("Failed. retrying log count: " + failed.size());
+                        track(failed);
+                    }
+
+                    // TODO returning meaningful things
+                    return null;
+                });
+
+        streamSubscription = stream.subscribe(streamObserver);
+    }
+
+    private Observable<Command> createTrackStream() {
+        return trackable
+                .observeOn(persistScheduler)
+                .map(jsonList -> {
+                    if (null == jsonList || 0 == jsonList.size()) return null;
+                    debugLogger.i("Persisting Scheduler: " + Thread.currentThread().getName());
+
+                    /* if jsonList is 0 or size() == 0, then dao return -1 */
+                    int totalCount = dao.add(jsonList);
+
+                    /* if development or dao is full, flush immediately */
+                    if (config.isDevelopment() || config.getMaxLogTrackCount() <= totalCount) { /* dao is full */
+                        return Command.TRACK_FULL;
+                    } else {
+                        return Command.TRACK_NOT_FULL;
+                    }
+                });
+    }
+
+    private Observable<Command> createFlushStream() {
+        setFlushInterval(config.getFlushIntervalAsMilliseconds()); /* enable timer */
+        return flushable
+                .filter(c -> !(config.isDevelopment()))
+                .observeOn(persistScheduler);
+    }
+
+    private Observable<List<JSONObject>> createLogStream() {
+
+        Observable<Command> trackStream = createTrackStream();
+        Observable<Command> flushStream = createFlushStream();
+
+        return trackStream.mergeWith(flushStream)
+                .map(command -> {
+                    // handling the upstream commands
+                    // if necessary, then send tracked N log to downstream
+                    if (Command.FLUSHED == command
+                            || Command.TRACK_FULL == command
+                            || Command.TIMER_FIRED == command) {
+
+                        debugLogger.i("Extracting Scheduler: " + Thread.currentThread().getName());
+                        return dao.getAndRemoveOldest(config.getMaxLogTrackCount());
+                    }
+
+                    // null will be filtered by withNetworking
+                    return null;
+                });
+    }
+
+    private void resubscribeCore() {
+        if (null != streamSubscription && !streamSubscription.isUnsubscribed())
+            streamSubscription.unsubscribe();
+
+        streamSubscription = stream.subscribe(this.streamObserver);
     }
 
     public void setFlushInterval(long milliseconds) {
-        if (RakeUserConfig.RUNNING_ENV.DEV == this.config.getRunningMode()) {
+        if (config.isDevelopment()) {
             debugLogger.i("setFlushInterval is not supported in `RUNNING_ENV.DEV`.");
             return;
         }
 
-        if (null != intervalSubscription && ! intervalSubscription.isUnsubscribed()) {
+        if (null != timerSubscription && ! timerSubscription.isUnsubscribed()) {
             stop.onNext(null); /* stop command */
-            intervalSubscription.unsubscribe();
+            timerSubscription.unsubscribe();
         }
 
         // TODO subscribeOn ComputationThread
-        intervalSubscription = Observable
-                .interval(milliseconds ,TimeUnit.MILLISECONDS)
+        timerSubscription = Observable
+                .interval(milliseconds, TimeUnit.MILLISECONDS)
                 .startWith(-1L) /* flush when app starts */
                 .takeUntil(stop)
                 .map(x -> {
                     debugLogger.i("Timer fired");
-                    this.timer.onNext(null);
+                    flushable.onNext(Command.TIMER_FIRED);
                     return x;
                 })
-                .onErrorResumeNext(t -> null) /* ignore timer errors */
-                .subscribe(new Observer<Object>() {
+                .subscribe(this.timerObserver);
+    }
+
+    private Observer<Long> createTimerObserver() {
+        return new Observer<Long>() {
                     @Override
                     public void onCompleted() {
-                        debugLogger.i("Old timer will be perished.");
+                        debugLogger.i("timerObserver.onCompleted: Old timer will be perished.");
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        debugLogger.i("onError in Observable.Interval for timer ");
+                        debugLogger.e("timerObserver.onError", e);
+                        setFlushInterval(config.getFlushIntervalAsMilliseconds());
                     }
 
                     @Override
-                    public void onNext(Object o) { /* do nothing */ }
-                });
+                    public void onNext(Long l) { /* do nothing */ }
+                };
+    }
+
+    private Observer<List<JSONObject>> createStreamObserver() {
+        return new Observer<List<JSONObject>>() {
+            @Override
+            public void onCompleted() {
+                debugLogger.i("RakeCore.onCompleted");
+                // resubscribeCore(); TODO rebuild?
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                debugLogger.e("RakeCore.onError", t);
+                resubscribeCore();
+            }
+
+            @Override
+            public void onNext(List<JSONObject> metric) {
+                if (null == metric) return;
+                debugLogger.i("Observer Thread: " + Thread.currentThread().getName());
+            }
+        };
     }
 
     /* to support test */
-    public Observable<List<JSONObject>> getTimer() { return timer; }
-    public Observable<List<JSONObject>> getTrackable() { return timer; }
+    public Observable<List<JSONObject>> getLogStream() {
+        return createLogStream();
+    }
 
-    /* to support test */
-    public void setTestObserverAndScheduler(Scheduler s, Observer<List<JSONObject>> o) {
-        buildCore(this.config, s, s, o);
+    public Observable<Command> getFlushStream() {
+        return createFlushStream();
+    }
+
+    public Observable<Command> getTrackStream() {
+        return createTrackStream();
     }
 }
