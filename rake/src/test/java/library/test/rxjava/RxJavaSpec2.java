@@ -143,4 +143,30 @@ public class RxJavaSpec2 {
 
         Observer<JSONObject> o3 = mock(Observer.class);
     }
+
+    @Test
+    public void test_ColdObservable() {
+
+        PublishSubject<Integer> a = PublishSubject.create();
+        PublishSubject<Integer> b = PublishSubject.create();
+
+        Observable<Integer> c = a
+                .mergeWith(b)
+                .map(x -> {
+                    // x will be printed twice
+                    System.out.println("x: " + x);
+                    return x;
+                });
+
+        c.subscribe(x -> {
+            System.out.println("first");
+        });
+
+        c.subscribe(x -> {
+            System.out.println("second");
+        });
+
+        a.onNext(3);
+    }
+
 }
