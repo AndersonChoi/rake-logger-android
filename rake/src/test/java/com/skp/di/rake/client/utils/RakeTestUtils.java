@@ -84,10 +84,10 @@ public class RakeTestUtils {
 
     static public RakeCore createTestRakeCore(RakeDao dao,
                                               RakeHttpClient client,
-                                              RakeUserConfig config,
-                                              Observer<List<JSONObject>> o) {
-        RakeCore core = new RakeCore(dao, client, config);
-        core.initialize(config, AndroidSchedulers.mainThread(), AndroidSchedulers.mainThread(), o);
+                                              RakeUserConfig config) {
+        RakeCore core = new RakeCore(
+                dao, AndroidSchedulers.mainThread(),
+                client, AndroidSchedulers.mainThread(), config);
 
         return core;
     }
@@ -112,7 +112,7 @@ public class RakeTestUtils {
         return createRakeUserConfig(
                 RakeUserConfig.RUNNING_ENV.LIVE,
                 "example liveToken", "exampleDevToken",
-                100, /* do not increase this interval value. it affects test running time */
+                300, /* do not increase this interval value. it affects test running time */
                 15);
     }
 
@@ -150,7 +150,7 @@ public class RakeTestUtils {
 
             @Override
             public boolean printDebugInfo() {
-                return false;
+                return true;
             }
         };
     }

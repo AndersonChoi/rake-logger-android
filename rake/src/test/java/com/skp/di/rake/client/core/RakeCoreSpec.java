@@ -1,6 +1,8 @@
 package com.skp.di.rake.client.core;
 
 
+import android.util.Log;
+
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.network.RakeHttpClient;
@@ -26,6 +28,7 @@ import java.util.Random;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.subjects.PublishSubject;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
@@ -43,11 +47,9 @@ import static org.mockito.Mockito.when;
 public class RakeCoreSpec {
 
     RakeCore devCore;
-    Observer<List<JSONObject>> devObserver;
     RakeUserConfig devConfig = RakeTestUtils.createDevConfig1();
 
     RakeCore liveCore;
-    Observer<List<JSONObject>> liveObserver;
     RakeUserConfig liveConfig = RakeTestUtils.createLiveConfig1();
 
     JSONObject log;
@@ -61,20 +63,15 @@ public class RakeCoreSpec {
         log = new JSONObject();
         log.put("rake_lib", RakeMetaConfig.RAKE_CLIENT_VERSION);
 
-        devObserver = mock(Observer.class);
         devCore  = RakeTestUtils.createTestRakeCore(
                 new RakeDaoMemory(),
                 RakeTestUtils.createMockHttpClient(devConfig),
-                devConfig,
-                devObserver
-        );
+                devConfig);
 
-        liveObserver = mock(Observer.class);
         liveCore = RakeTestUtils.createTestRakeCore(
                 new RakeDaoMemory(),
                 RakeTestUtils.createMockHttpClient(liveConfig),
-                liveConfig,
-                liveObserver);
+                liveConfig);
 
         /* withRetry */
         failedCount = 0;
@@ -83,44 +80,64 @@ public class RakeCoreSpec {
 
     @Test
     public void test_LiveCore_Should_Not_Flush() throws InterruptedException {
-        for (int i = 0; i < liveConfig.getMaxLogTrackCount() - 1; i++) liveCore.track(log);
+        Observable<List<JSONObject>> logStream = liveCore.getLogStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
+        logStream.subscribe(o);
 
-        verify(liveObserver, never()).onNext(any());
+        for (int i = 0; i < liveConfig.getMaxLogTrackCount() - 1; i++)
+            liveCore.track(log);
+
+        verify(o, never()).onNext(any());
     }
 
     @Test
     public void test_LiveCore_Should_Not_To_Flush_When_Empty() {
+        Observable<List<JSONObject>> logStream = liveCore.getLogStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
+        logStream.subscribe(o);
+
         liveCore.flush();
 
-
-        verify(liveObserver, never()).onNext(any());
-        verify(liveObserver, never()).onError(any());
+        verify(o, never()).onNext(any());
+        verify(o, never()).onError(any());
     }
 
     @Test
     public void test_LiveCore_Auto_Flush_When_Persistence_Is_Full() {
+        Observable<List<JSONObject>> logStream = liveCore.getLogStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
+        logStream.subscribe(o);
+
         for (int i = 0; i < liveConfig.getMaxLogTrackCount(); i++)
             liveCore.track(log);
 
-        verify(liveObserver, times(1)).onNext(any());
-        verify(liveObserver, never()).onError(any());
+        verify(o, times(1)).onNext(any());
+        verify(o, never()).onError(any());
     }
 
     @Test
     public void test_LiveCore_Should_Not_To_Flush_Immediately() {
+        Observable<List<JSONObject>> logStream = liveCore.getLogStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
+        logStream.subscribe(o);
+
         liveCore.track(log);
-        verify(liveObserver, never()).onNext(any());
+        verify(o, never()).onNext(any());
 
         liveCore.flush();
-        verify(liveObserver, times(1)).onNext(any());
-        verify(liveObserver, never()).onError(any());
+        verify(o, times(1)).onNext(any());
+        verify(o, never()).onError(any());
     }
 
     @Test
     public void test_DevCore_Should_Send_When_Track_Is_Called() {
+        Observable<List<JSONObject>> logStream = devCore.getLogStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
+        logStream.subscribe(o);
+
         devCore.track(log);
 
-        verify(devObserver, times(1)).onNext(any());
+        verify(o, times(1)).onNext(any());
     }
 
     @Test
@@ -136,6 +153,32 @@ public class RakeCoreSpec {
     }
 
     @Test
+    public void test_Dev_TrackStream_Should_Return_TRACK_FULL() {
+        Observable<RakeCore.Command> trackStream = devCore.getTrackStream();
+        Observer<RakeCore.Command> o = mock(Observer.class);
+        trackStream.subscribe(o);
+
+        devCore.track(log);
+
+        verify(o, times(1)).onNext(RakeCore.Command.TRACK_FULL);
+    }
+
+    @Test
+    public void test_Live_TrackStream_Should_Return_TRACK_NOT_FULL() {
+        // iff getMaxTrackCount > 1;
+
+        Observable<RakeCore.Command> trackStream = liveCore.getTrackStream();
+        Observer<RakeCore.Command> o = mock(Observer.class);
+        trackStream.subscribe(o);
+
+        liveCore.track(log);
+
+        verify(o, times(1)).onNext(RakeCore.Command.TRACK_NOT_FULL);
+    }
+
+
+
+    @Ignore
     public void test_DevCore_withRetry() throws InterruptedException {
         RakeDao dao = new RakeDaoMemory();
         RakeHttpClient unstableClient = mock(RakeHttpClient.class);
@@ -156,8 +199,7 @@ public class RakeCoreSpec {
         RakeCore testCore = RakeTestUtils.createTestRakeCore(
                 dao,
                 unstableClient,
-                RakeTestUtils.createDevConfig1(),
-                observer);
+                RakeTestUtils.createDevConfig1());
 
         int count = 10;
         for (int i = 0; i < count; i++) testCore.track(new JSONObject());
@@ -169,7 +211,7 @@ public class RakeCoreSpec {
         verify(observer, times(count + failedCount)).onNext(any());
     }
 //
-//    @Test
+//    @Ignore
 //    public void test_setFlushInterval() throws InterruptedException {
 //        int interval1 = 100;
 //        int expectedOnNextCallNumberOnTimer1 = 2;
