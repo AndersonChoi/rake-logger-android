@@ -55,7 +55,7 @@ public class RakeHttpClient {
     static public final int DEFAULT_SOCKET_TIMEOUT = 120000;
     private int connectionTimeout;
     private int socketTimeout;
-    private RakeLogger debugLogger;
+    private RakeLogger logger;
 
     public void setEndPoint(String endPoint) { this.endPoint = endPoint; }
     /* to support legacy api `setRakeServer` */
@@ -71,7 +71,7 @@ public class RakeHttpClient {
     public RakeHttpClient(RakeUserConfig config, ContentType contentType) {
         this.config = config;
         this.contentType = contentType;
-        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
+        this.logger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode())
             endPoint = DEV_MODE_ENDPOINT;
@@ -102,32 +102,32 @@ public class RakeHttpClient {
 //            }
 
         } catch(UnsupportedEncodingException e) {
-            debugLogger.e("Cant' build StringEntity using body", e);
+            logger.e("Cant' build StringEntity using body", e);
         } catch(JSONException e) {
-            debugLogger.e("Can't build RakeRequestBody", e);
+            logger.e("Can't build RakeRequestBody", e);
         } catch(ClientProtocolException e) {
-            debugLogger.e("Invalid Network Protocol", e);
+            logger.e("Invalid Network Protocol", e);
         } catch (SocketTimeoutException e) {
-            debugLogger.e("Socket timeout occurred", e);
+            logger.e("Socket timeout occurred", e);
             retry = true;
         } catch (ConnectTimeoutException e) {
-            debugLogger.e("Connection timeout occurred", e);
+            logger.e("Connection timeout occurred", e);
             retry = true;
         } catch(UnknownHostException e) {
-            debugLogger.e("No connected network", e);
+            logger.e("No connected network", e);
             retry = true;
         } catch (IOException e) {
-            debugLogger.e("Can't send message to server", e);
+            logger.e("Can't send message to server", e);
             retry = true;
         } catch (RakeException e) {
             throw e; /* to support test */
         } catch(GeneralSecurityException e) {
-            debugLogger.e("Can't build HttpsClient", e);
+            logger.e("Can't build HttpsClient", e);
         } catch(OutOfMemoryError e) {
-            debugLogger.e("Not enough memory", e);
+            logger.e("Not enough memory", e);
             retry = true;
         } catch (Exception e) {
-            debugLogger.e("Uncaught exception occurred", e);
+            logger.e("Uncaught exception occurred", e);
         }
 
         /* returning null means, there is no need to retry */

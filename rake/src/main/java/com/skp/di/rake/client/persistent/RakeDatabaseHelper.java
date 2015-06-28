@@ -13,7 +13,7 @@ import java.io.File;
 public class RakeDatabaseHelper extends SQLiteOpenHelper {
     /* member variables */
     private File databaseFile;
-    private RakeLogger debugLogger;
+    private RakeLogger logger;
 
     /* constructor */
     RakeDatabaseHelper(RakeUserConfig config,
@@ -24,7 +24,7 @@ public class RakeDatabaseHelper extends SQLiteOpenHelper {
         super(context, databaseName, null, databaseVersion);
 
         databaseFile = context.getDatabasePath(databaseName);
-        debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
+        logger = RakeLoggerFactory.getLogger(this.getClass(), config);
     }
 
     /**
@@ -37,7 +37,7 @@ public class RakeDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        debugLogger.i("Creating a new Rake Database");
+        logger.i("Creating a new Rake Database");
 
         db.execSQL(RakeDaoSQLite.QUERY_CREATE_EVENTS_TABLE);
         db.execSQL(RakeDaoSQLite.QUERY_EVENTS_TIME_INDEX);
@@ -45,7 +45,7 @@ public class RakeDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        debugLogger.i("Upgrading base, drop and creating new table [" +
+        logger.i("Upgrading base, drop and creating new table [" +
                 RakeDaoSQLite.Table.EVENTS.getName() + "]");
 
         db.execSQL("DROP TABLE IF EXISTS " +

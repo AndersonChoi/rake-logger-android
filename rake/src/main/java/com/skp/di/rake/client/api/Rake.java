@@ -19,14 +19,14 @@ public class Rake {
     private RakeUserConfig config;
     private SystemInformation sysInfo;
 
-    private RakeLogger debugLogger;
+    private RakeLogger logger;
 
     public Rake(RakeUserConfig config, RakeCore core, Context context, SystemInformation sysInfo) {
         this.config = config;
         this.core = core;
         this.sysInfo = sysInfo;
         this.superProperties = new JSONObject();
-        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
+        this.logger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         legacySupport(context, config);
     }
@@ -42,9 +42,9 @@ public class Rake {
             JSONObject defaultProperties = sysInfo.getDefaultProperties(config);
             trackable = ShuttleProtocol.getTrackable(shuttle, superProperties, defaultProperties);
         } catch (JSONException e) {
-            debugLogger.e("Can't build trackable", e);
+            logger.e("Can't build trackable", e);
         } catch (Exception e) {
-            debugLogger.e("Can't build trackable. Due to invalid shuttle", e);
+            logger.e("Can't build trackable. Due to invalid shuttle", e);
         }
 
         if (null != trackable) core.track(trackable);
@@ -55,7 +55,7 @@ public class Rake {
     }
 
     public void setFlushInterval(long milliseconds) {
-        debugLogger.i("set flush interval: " + milliseconds);
+        logger.i("set flush interval: " + milliseconds);
         core.setFlushInterval(milliseconds);
     }
 
@@ -104,12 +104,12 @@ public class Rake {
     }
 
     public void registerSuperProperties(JSONObject superProperties) {
-        debugLogger.i("add super-properties: \n" + superProperties);
+        logger.i("add super-properties: \n" + superProperties);
         addSuperProperties(superProperties, false);
     }
 
     public void registerSuperPropertiesOnce(JSONObject superProperties) {
-        debugLogger.i("add super-properties once: \n" + superProperties);
+        logger.i("add super-properties once: \n" + superProperties);
         addSuperProperties(superProperties, true);
     }
 
@@ -126,11 +126,11 @@ public class Rake {
                     this.superProperties.put(key, superProps.get(key));
                 }
             } catch (JSONException e) {
-                debugLogger.e("Can't add super property", e);
+                logger.e("Can't add super property", e);
             }
         }
 
-        debugLogger.i("total super-properties: \n" + this.superProperties);
+        logger.i("total super-properties: \n" + this.superProperties);
         savePreferences();
     }
 
@@ -139,8 +139,8 @@ public class Rake {
             this.superProperties.remove(superPropertyName);
         }
 
-        debugLogger.i("unregister super-property: " + superPropertyName);
-        debugLogger.i("total super-properties: \n" + this.superProperties);
+        logger.i("unregister super-property: " + superPropertyName);
+        logger.i("total super-properties: \n" + this.superProperties);
         savePreferences();
     }
 
@@ -149,7 +149,7 @@ public class Rake {
             this.superProperties = new JSONObject();
         }
 
-        debugLogger.i("clear all super-properties, now super-properties: \n" + this.superProperties);
+        logger.i("clear all super-properties, now super-properties: \n" + this.superProperties);
         clearPreferences();
     }
 
@@ -169,13 +169,13 @@ public class Rake {
             try {
                 superProperties = new JSONObject(props);
             } catch (JSONException e) {
-                debugLogger.e("Cannot parse stored superProperties", e);
+                logger.e("Cannot parse stored superProperties", e);
                 superProperties = new JSONObject();
                 clearPreferences();
             }
         }
 
-        debugLogger.i("read super-properties from SharedPref, now super-properties: \n" + this.superProperties);
+        logger.i("read super-properties from SharedPref, now super-properties: \n" + this.superProperties);
     }
 
     private void savePreferences() {

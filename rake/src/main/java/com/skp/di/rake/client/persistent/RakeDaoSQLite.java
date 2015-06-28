@@ -53,12 +53,12 @@ public class RakeDaoSQLite implements RakeDao {
 
     /* member variables */
     private final RakeDatabaseHelper dbHelper;
-    private RakeLogger debugLogger;
+    private RakeLogger logger;
 
     /* constructor */
     public RakeDaoSQLite(RakeUserConfig config, Context context) {
-        this.debugLogger = RakeLoggerFactory.getLogger(this.getClass(), config);
-        debugLogger.i("Rake Database '" + DATABASE_NAME + "' constructed.");
+        this.logger = RakeLoggerFactory.getLogger(this.getClass(), config);
+        logger.i("Rake Database '" + DATABASE_NAME + "' constructed.");
         dbHelper = new RakeDatabaseHelper(config, context, DATABASE_NAME, DATABASE_VERSION);
     }
 
@@ -69,11 +69,11 @@ public class RakeDaoSQLite implements RakeDao {
         return add(Arrays.asList(json));
     }
 
-    synchronized public int add(List<JSONObject> list) {
+    public int add(List<JSONObject> list) {
         if (null == list || 0 == list.size())
             return -1;
 
-        debugLogger.i("Add " + list.size() + " log to database");
+        logger.i("Add " + list.size() + " log to database");
 
         int count = -1;
         String tableName = RAKE_LOG_TABLE.getName();
@@ -94,7 +94,7 @@ public class RakeDaoSQLite implements RakeDao {
             c.moveToFirst();
             count = c.getInt(0);
         } catch (SQLiteException e) {
-            debugLogger.e("Add failed", e);
+            logger.e("Add failed", e);
 
             // We assume that in general, the results of a SQL exception are
             // unrecoverable, and could be associated with an oversized or
@@ -113,12 +113,12 @@ public class RakeDaoSQLite implements RakeDao {
     private void _removeRowOldest (long time, SQLiteDatabase db) {
         String tableName = RAKE_LOG_TABLE.getName();
 
-        debugLogger.i("Clean up all events until [time: " + time + "] from table " + tableName);
+        logger.i("Clean up all events until [time: " + time + "] from table " + tableName);
 
         try {
             db.delete(tableName, KEY_CREATED_AT + " <= " + time, null);
         } catch (SQLiteException e) {
-            debugLogger.e("Clean up event time failed. Delete DB.", e);
+            logger.e("Clean up event time failed. Delete DB.", e);
 
             // We assume that in general, the results of a SQL exception are
             // unrecoverable, and could be associated with an oversized or
@@ -128,7 +128,7 @@ public class RakeDaoSQLite implements RakeDao {
         }
     }
 
-    synchronized public List<JSONObject> getAndRemoveOldest(int N) {
+    public List<JSONObject> getAndRemoveOldest(int N) {
         Cursor c = null;
         String tableName = RAKE_LOG_TABLE.getName();
         List<JSONObject> result = new ArrayList<>();
@@ -151,7 +151,7 @@ public class RakeDaoSQLite implements RakeDao {
                     result.add(json);
                 } catch (JSONException e) {
                     // TODO metric, failed count
-                    debugLogger.e("Failed to convert stored String into JSONObject: " + storedJsonString, e);
+                    logger.e("Failed to convert stored String into JSONObject: " + storedJsonString, e);
                 }
             }
 
@@ -159,7 +159,7 @@ public class RakeDaoSQLite implements RakeDao {
 
         } catch (SQLiteException e) {
             // TODO metric, failed count
-            debugLogger.e("Clear Oldest N log failed.", e);
+            logger.e("Clear Oldest N log failed.", e);
 
             // We'll dump the DB on write failures, but with reads we can
             // let things ride in hopes the issue clears up.
@@ -175,7 +175,7 @@ public class RakeDaoSQLite implements RakeDao {
     }
 
     @Override
-    synchronized public int getCount() {
+    public int getCount() {
         String QUERY_GET_COUNT = "SELECT * FROM " + RAKE_LOG_TABLE.getName();
         Cursor cursor = null;
         int count = -1;
@@ -185,7 +185,7 @@ public class RakeDaoSQLite implements RakeDao {
             cursor = db.rawQuery(QUERY_GET_COUNT, null);
             count = cursor.getCount();
         } catch(SQLiteException e) {
-            debugLogger.e("Can't get count due to", e);
+            logger.e("Can't get count due to", e);
             dbHelper.close();
 
             if (null != cursor) cursor.close();
@@ -195,7 +195,7 @@ public class RakeDaoSQLite implements RakeDao {
     }
 
     @Override
-    synchronized public void clear() {
+    public void clear() {
         dbHelper.dropDatabase();
     }
 }

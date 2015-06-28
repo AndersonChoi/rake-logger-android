@@ -49,4 +49,12 @@ public class RakeLogger {
 
         Log.i(TAG, message);
     }
+
+    public void printCurrentThreadWith(String message) {
+        if (null == message) return;
+        if (!config.getPrintInfoFlag()) return;
+
+        String format = String.format("[%s thread] %s", Thread.currentThread().getName(), message);
+        Log.i(TAG, format);
+    }
 }

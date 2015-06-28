@@ -116,9 +116,13 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void test_LiveCore_Should_Not_To_Flush_Immediately() {
+    public void test_LiveCore_Should_Not_To_Flush_Immediately() throws InterruptedException {
         Observable<List<JSONObject>> logStream = liveCore.getLogStream();
         Observer<List<JSONObject>> o = mock(Observer.class);
+
+        /* to ignore initial flush */
+        Thread.sleep(100);
+
         logStream.subscribe(o);
 
         liveCore.track(log);
@@ -142,8 +146,8 @@ public class RakeCoreSpec {
 
     @Test
     public void test_DevCore_Should_Disable_Flush_Command() {
-        Observable<RakeCore.Command> flushStream = devCore.getFlushStream();
-        Observer<RakeCore.Command> o = mock(Observer.class);
+        Observable<List<JSONObject>> flushStream = devCore.getFlushStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
 
         flushStream.subscribe(o);
         devCore.flush();
@@ -153,30 +157,15 @@ public class RakeCoreSpec {
     }
 
     @Test
-    public void test_Dev_TrackStream_Should_Return_TRACK_FULL() {
-        Observable<RakeCore.Command> trackStream = devCore.getTrackStream();
-        Observer<RakeCore.Command> o = mock(Observer.class);
-        trackStream.subscribe(o);
+    public void test_Dev_LogStream_Should_Return_Log_Immediately() {
+        Observable<List<JSONObject>> logStream = devCore.getLogStream();
+        Observer<List<JSONObject>> o = mock(Observer.class);
+        logStream.subscribe(o);
 
         devCore.track(log);
 
-        verify(o, times(1)).onNext(RakeCore.Command.TRACK_FULL);
+        verify(o, times(1)).onNext(any());
     }
-
-    @Test
-    public void test_Live_TrackStream_Should_Return_TRACK_NOT_FULL() {
-        // iff getMaxTrackCount > 1;
-
-        Observable<RakeCore.Command> trackStream = liveCore.getTrackStream();
-        Observer<RakeCore.Command> o = mock(Observer.class);
-        trackStream.subscribe(o);
-
-        liveCore.track(log);
-
-        verify(o, times(1)).onNext(RakeCore.Command.TRACK_NOT_FULL);
-    }
-
-
 
     @Ignore
     public void test_DevCore_withRetry() throws InterruptedException {
