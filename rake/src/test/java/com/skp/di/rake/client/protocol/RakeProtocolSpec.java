@@ -46,7 +46,8 @@ public class RakeProtocolSpec {
 
     @Test
     public void testBuildUrlEncodedEntity() throws JSONException, IOException {
-        UrlEncodedFormEntity entity = RakeProtocol.buildUrlEncodedEntity(tracked);
+        UrlEncodedFormEntity entity =
+                (UrlEncodedFormEntity) new RakeProtocolV1().buildUrlEncodedFormEntity(tracked);
 
         JSONObject request = new JSONObject();
         List<NameValuePair> pairs = URLEncodedUtils.parse(entity);
@@ -58,18 +59,18 @@ public class RakeProtocolSpec {
 
     @Test
     public void testBuildJsonEntity() throws JSONException, IOException {
-        StringEntity entity = RakeProtocol.buildJsonEntity(tracked);
+        StringEntity entity = RakeProtocolV2.buildJsonEntity(tracked);
         JSONObject request = new JSONObject(EntityUtils.toString(entity));
 
         assertRequestHasValidRakeFields(request);
     }
 
     public void assertRequestHasValidRakeFields(JSONObject request) throws JSONException {
-        assertTrue(request.has(RakeProtocol.FIELD_NAME_DATA));
-        assertTrue(request.has(RakeProtocol.FIELD_NAME_COMPRESS));
+        assertTrue(request.has(RakeProtocolV2.FIELD_NAME_DATA));
+        assertTrue(request.has(RakeProtocolV2.FIELD_NAME_COMPRESS));
 
-        assertEquals(RakeProtocol.FIELD_VALUE_COMPRESS,
-                request.getString(RakeProtocol.FIELD_NAME_COMPRESS));
+        assertEquals(RakeProtocolV2.FIELD_VALUE_COMPRESS,
+                request.getString(RakeProtocolV2.FIELD_NAME_COMPRESS));
     }
 
 

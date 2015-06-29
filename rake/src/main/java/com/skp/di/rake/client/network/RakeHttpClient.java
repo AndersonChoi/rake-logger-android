@@ -2,6 +2,7 @@ package com.skp.di.rake.client.network;
 
 import com.skp.di.rake.client.api.RakeUserConfig;
 import com.skp.di.rake.client.protocol.RakeProtocol;
+import com.skp.di.rake.client.protocol.RakeProtocolV2;
 import com.skp.di.rake.client.protocol.exception.RakeException;
 import com.skp.di.rake.client.protocol.exception.RakeProtocolBrokenException;
 import com.skp.di.rake.client.utils.RakeLogger;
@@ -48,7 +49,6 @@ public class RakeHttpClient {
     private RakeUserConfig config;
     public enum ContentType { JSON, URL_ENCODED_FORM }
     private String endPoint;
-    private ContentType contentType;
     private String LIVE_MODE_ENDPOINT = "https://rake.skplanet.com:8443/log/track";
     private String DEV_MODE_ENDPOINT  = "https://pg.rake.skplanet.com:8443/log/track";
     static public final int DEFAULT_CONNECTION_TIMEOUT = 3000;
@@ -56,6 +56,7 @@ public class RakeHttpClient {
     private int connectionTimeout;
     private int socketTimeout;
     private RakeLogger logger;
+    private RakeProtocol rakeProtocol;
 
     public void setEndPoint(String endPoint) { this.endPoint = endPoint; }
     /* to support legacy api `setRakeServer` */
@@ -68,9 +69,9 @@ public class RakeHttpClient {
     public int getSocketTimeout() { return this.socketTimeout; }
 
 
-    public RakeHttpClient(RakeUserConfig config, ContentType contentType) {
+    public RakeHttpClient(RakeUserConfig config, RakeProtocol protocol) {
         this.config = config;
-        this.contentType = contentType;
+        this.rakeProtocol = protocol;
         this.logger = RakeLoggerFactory.getLogger(this.getClass(), config);
 
         if (RakeUserConfig.RUNNING_ENV.DEV == config.getRunningMode())
@@ -96,10 +97,9 @@ public class RakeHttpClient {
             int statusCode = res.getStatusLine().getStatusCode();
             String responseBody = convertHttpResponseToString(res);
 
-            // TODO strategy
-//            if (ContentType.JSON == contentType) {
-                verifyResponse(statusCode, responseBody);
-//            }
+            logger.i("Response from server: \n" + responseBody);
+
+            rakeProtocol.verifyResponse(statusCode, responseBody);
 
         } catch(UnsupportedEncodingException e) {
             logger.e("Cant' build StringEntity using body", e);
@@ -120,7 +120,8 @@ public class RakeHttpClient {
             logger.e("Can't send message to server", e);
             retry = true;
         } catch (RakeException e) {
-            throw e; /* to support test */
+            logger.e("RakeException occurred, might be due to 500", e);
+            retry = true;
         } catch(GeneralSecurityException e) {
             logger.e("Can't build HttpsClient", e);
         } catch(OutOfMemoryError e) {
@@ -134,10 +135,6 @@ public class RakeHttpClient {
         return (true == retry) ? tracked : null;
     }
 
-    protected void verifyResponse(int statusCode, String responseBody) {
-        RakeProtocol.handleRakeException(statusCode, responseBody);
-    }
-
     protected HttpResponse executePost(List<JSONObject> tracked)
             throws IOException, JSONException, GeneralSecurityException {
 
@@ -147,15 +144,7 @@ public class RakeHttpClient {
         else if (endPoint.startsWith("http")) client = createHttpClient();
         else throw new RakeProtocolBrokenException("Unsupported endpoint protocol");
 
-        HttpEntity entity = null;
-
-        if      (contentType == ContentType.JSON)
-            entity = RakeProtocol.buildJsonEntity(tracked);
-        else if (contentType == ContentType.URL_ENCODED_FORM)
-            entity = RakeProtocol.buildUrlEncodedEntity(tracked);
-        else throw new RakeProtocolBrokenException("Unsupported contentType");
-
-        HttpPost     post   = createHttpPost(entity);
+        HttpPost post = rakeProtocol.buildRequest(tracked, endPoint);
         HttpResponse response = client.execute(post);
 
         return response;
@@ -209,17 +198,5 @@ public class RakeHttpClient {
         HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
 
         return params;
-    }
-
-    private HttpPost createHttpPost(HttpEntity entity) {
-        HttpPost post = new HttpPost(endPoint);
-        post.setEntity(entity);
-
-        if (contentType == ContentType.JSON) {
-            post.setHeader("Content-Type", "application/json");
-            post.setHeader("Accept", "application/json");
-        }
-
-        return post;
     }
 }

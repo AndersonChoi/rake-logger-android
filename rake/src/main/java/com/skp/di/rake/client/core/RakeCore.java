@@ -113,7 +113,15 @@ public class RakeCore {
                 .map(tracked -> {
                     logger.printCurrentThreadWith("Networking");
                     logger.i("Sent log count: " + tracked.size());
-                    return client.send(tracked); /* return tracked if failed, otherwise return null */
+
+                    /* return tracked if failed, otherwise return null */
+                    List<JSONObject> failed = client.send(tracked);
+
+                    if (null != failed && failed.size() > 0) {
+                        logger.i("Failed. retrying log count: " + failed.size());
+                    }
+
+                    return failed;
                 })
                         
                 /* with retry, buffer */
@@ -122,8 +130,7 @@ public class RakeCore {
                 .flatMap(buffers -> Observable.from(buffers))
                 .map(failed -> {
                     /* iff failed */
-                    logger.i("Failed. retrying log count: " + failed.size());
-                    dao.add(failed);
+                    trackable.onNext(failed);
 
                     // TODO metric
                     // TODO returning meaningful things
@@ -153,6 +160,7 @@ public class RakeCore {
                     if (null != nullOrJsonList) {
                         logger.printCurrentThreadWith("Persisting");
                         totalCount = dao.add(nullOrJsonList);
+                        logger.i("Total log count: " + totalCount);
                     }
 
                     if (config.isDevelopment()              /* if development, flush immediately */
@@ -196,6 +204,8 @@ public class RakeCore {
             logger.i("setFlushInterval is not supported in `RUNNING_ENV.DEV`.");
             return;
         }
+
+        logger.i("set flush interval: " + milliseconds);
 
         if (null != timerSubscription && ! timerSubscription.isUnsubscribed()) {
             stop.onNext(null); /* stop command */

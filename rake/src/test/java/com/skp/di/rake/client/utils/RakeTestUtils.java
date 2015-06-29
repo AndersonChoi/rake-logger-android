@@ -5,7 +5,7 @@ import com.skp.di.rake.client.config.RakeMetaConfig;
 import com.skp.di.rake.client.core.RakeCore;
 import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
-import com.skp.di.rake.client.protocol.RakeProtocol;
+import com.skp.di.rake.client.protocol.RakeProtocolV2;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.exceptions.OnErrorThrowable;
 
@@ -176,7 +175,7 @@ class MockServer {
 
     static public final int ERROR_CODE_RAKE_PROTOCOL_BROKEN = 90001;
 
-    static private int errorCode = RakeProtocol.ERROR_CODE_OK;
+    static private int errorCode = RakeProtocolV2.ERROR_CODE_OK;
 
     static public void setErrorCode(int errorCode) {
         MockServer.errorCode = errorCode;
@@ -225,18 +224,18 @@ class MockServer {
 
     static private int getStatusCode() {
         switch (errorCode) {
-            case RakeProtocol.ERROR_CODE_OK:
+            case RakeProtocolV2.ERROR_CODE_OK:
                 return HttpStatus.SC_OK;
-            case RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD:
-            case RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX:
+            case RakeProtocolV2.ERROR_CODE_INSUFFICIENT_JSON_FIELD:
+            case RakeProtocolV2.ERROR_CODE_INVALID_JSON_SYNTAX:
                 return HttpStatus.SC_BAD_REQUEST;
-            case RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN:
+            case RakeProtocolV2.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN:
                 return HttpStatus.SC_UNAUTHORIZED;
-            case RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE:
+            case RakeProtocolV2.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE:
                 return HttpStatus.SC_FORBIDDEN;
-            case RakeProtocol.ERROR_CODE_INVALID_END_POINT:
+            case RakeProtocolV2.ERROR_CODE_INVALID_END_POINT:
                 return HttpStatus.SC_NOT_FOUND;
-            case RakeProtocol.ERROR_CODE_INTERNAL_SERVER_ERROR:
+            case RakeProtocolV2.ERROR_CODE_INTERNAL_SERVER_ERROR:
                 return HttpStatus.SC_INTERNAL_SERVER_ERROR;
         }
 
@@ -281,17 +280,11 @@ class MockSystemInformation {
 class MockRakeHttpClient extends RakeHttpClient {
 
     public MockRakeHttpClient(RakeUserConfig config) {
-        super(config, ContentType.URL_ENCODED_FORM);
+        super(config, new RakeProtocolV2());
     }
 
     @Override
     protected HttpResponse executePost(List<JSONObject> tracked) throws IOException {
         return MockServer.respond();
-    }
-
-    @Override
-    protected void verifyResponse(int statusCode, String responseBody) {
-        RakeProtocol.verifyStatusCode(statusCode);
-        RakeProtocol.verifyErrorCode(responseBody);
     }
 }

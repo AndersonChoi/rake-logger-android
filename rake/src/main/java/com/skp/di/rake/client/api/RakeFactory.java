@@ -9,6 +9,7 @@ import com.skp.di.rake.client.network.RakeHttpClient;
 import com.skp.di.rake.client.persistent.RakeDao;
 import com.skp.di.rake.client.persistent.RakeDaoMemory;
 import com.skp.di.rake.client.persistent.RakeDaoSQLite;
+import com.skp.di.rake.client.protocol.RakeProtocolV1;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +29,7 @@ public class RakeFactory {
         Rake logger;
 
         if (null == dao) dao = new RakeDaoSQLite(config, context);
-        if (null == client) client = new RakeHttpClient(config, RakeHttpClient.ContentType.URL_ENCODED_FORM);
+        if (null == client) client = new RakeHttpClient(config, new RakeProtocolV1());
         if (null == sysInfo) sysInfo = new SystemInformation(context);
         if (null == core) core = new RakeCore(dao, client, config);
 

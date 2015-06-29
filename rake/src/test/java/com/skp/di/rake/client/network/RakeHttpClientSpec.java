@@ -2,7 +2,8 @@ package com.skp.di.rake.client.network;
 
 
 import com.skp.di.rake.client.api.RakeUserConfig;
-import com.skp.di.rake.client.protocol.RakeProtocol;
+import com.skp.di.rake.client.protocol.RakeProtocolV1;
+import com.skp.di.rake.client.protocol.RakeProtocolV2;
 import com.skp.di.rake.client.protocol.exception.InsufficientJsonFieldException;
 import com.skp.di.rake.client.protocol.exception.InternalServerErrorException;
 import com.skp.di.rake.client.protocol.exception.InvalidEndPointException;
@@ -54,7 +55,7 @@ public class RakeHttpClientSpec {
 
         testHttpClient = new RakeHttpClient(
                 RakeTestUtils.createDevConfig1(),
-                RakeHttpClient.ContentType.URL_ENCODED_FORM);
+                new RakeProtocolV1());
 
         testHttpClient.setEndPoint(TEST_MODE_ENDPOINT);
     }
@@ -97,7 +98,7 @@ public class RakeHttpClientSpec {
         server.start(9010);
 
         RakeHttpClient httpClient  =
-                new RakeHttpClient(devConfig, RakeHttpClient.ContentType.URL_ENCODED_FORM);
+                new RakeHttpClient(devConfig, new RakeProtocolV1());
 
         httpClient.setEndPoint(TEST_MODE_ENDPOINT);
         httpClient.send(Arrays.asList(new JSONObject()));
@@ -119,7 +120,7 @@ public class RakeHttpClientSpec {
         server.start(9010);
 
         RakeHttpClient httpClient  =
-                new RakeHttpClient(devConfig, RakeHttpClient.ContentType.JSON);
+                new RakeHttpClient(devConfig, new RakeProtocolV2());
 
         httpClient.setEndPoint(TEST_MODE_ENDPOINT);
         httpClient.send(Arrays.asList(new JSONObject()));
@@ -131,51 +132,60 @@ public class RakeHttpClientSpec {
         server.shutdown();
     }
 
-    @Test(expected= InsufficientJsonFieldException.class)
+    @Test
     public void test_InsufficientJsonFieldException() {
-        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD);
+        // should be no InsufficientJsonFieldException
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocolV2.ERROR_CODE_INSUFFICIENT_JSON_FIELD);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= InvalidJsonSyntaxException.class)
+    @Test
     public void test_InvalidJsonSyntaxException() {
-        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX);
+        // should be no InvalidJsonSyntaxExceptino
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocolV2.ERROR_CODE_INVALID_JSON_SYNTAX);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= NotRegisteredRakeTokenException.class)
+    @Test
     public void test_NotRegisteredRakeTokenException() {
-        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN);
+        // should be no NotRegisteredRakeTokenException
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocolV2.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= WrongRakeTokenUsageException.class)
+    @Test
     public void test_WrongRakeTokenUsageException() {
-        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE);
+        // should be no WrongRakeTokenUsageException
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocolV2.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= InvalidEndPointException.class)
+    @Test
     public void test_InvalidEndPointException() {
-        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INVALID_END_POINT);
+        // should be no InvalidEndPointException
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocolV2.ERROR_CODE_INVALID_END_POINT);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= InternalServerErrorException.class)
+    @Test
     public void test_InternalServerErrorException() {
-        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocol.ERROR_CODE_INTERNAL_SERVER_ERROR);
+        // should be no InternalServerErrorException
+        RakeTestUtils.setErrorCodeOnMockServer(RakeProtocolV2.ERROR_CODE_INTERNAL_SERVER_ERROR);
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= RakeProtocolBrokenException.class)
+    @Test
     public void test_RakeProtocolBrokenExceptionWhenServerReturnInvalidJsonFormat() {
+        // should be no RakeProtocolBrokenException
+
         /* mock server will return invalid json format */
         RakeTestUtils.setErrorCodeOnMockServer(RakeTestUtils.getErorCodeWhenRakeProtocolBroken());
         mockClient.send(Arrays.asList(new JSONObject()));
     }
 
-    @Test(expected= RakeProtocolBrokenException.class)
+    @Test
     public void test_RakeProtocolBrokenExceptionWhenServerReturnInvalidErrorAndStatusCode() {
+        // should be no RakeProtocolBrokenException
         /* mock server will return undefined error code and status code */
         RakeTestUtils.setErrorCodeOnMockServer(909014);
         mockClient.send(Arrays.asList(new JSONObject()));

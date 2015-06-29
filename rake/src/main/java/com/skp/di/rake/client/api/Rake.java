@@ -55,7 +55,6 @@ public class Rake {
     }
 
     public void setFlushInterval(long milliseconds) {
-        logger.i("set flush interval: " + milliseconds);
         core.setFlushInterval(milliseconds);
     }
 

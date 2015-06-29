@@ -21,27 +21,27 @@ public class RakeProtocolCodeSpec {
     @Test
     public void testErrorCodeShouldBeMappedToException() {
         assertEquals(
-                RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD,
+                RakeProtocolV2.ERROR_CODE_INSUFFICIENT_JSON_FIELD,
                 InsufficientJsonFieldException.ERROR_CODE);
 
         assertEquals(
-                RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX,
+                RakeProtocolV2.ERROR_CODE_INVALID_JSON_SYNTAX,
                 InvalidJsonSyntaxException.ERROR_CODE);
 
         assertEquals(
-                RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN,
+                RakeProtocolV2.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN,
                 NotRegisteredRakeTokenException.ERROR_CODE);
 
         assertEquals(
-                RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE,
+                RakeProtocolV2.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE,
                 WrongRakeTokenUsageException.ERROR_CODE);
 
         assertEquals(
-                RakeProtocol.ERROR_CODE_INVALID_END_POINT,
+                RakeProtocolV2.ERROR_CODE_INVALID_END_POINT,
                 InvalidEndPointException.ERROR_CODE);
 
         assertEquals(
-                RakeProtocol.ERROR_CODE_INTERNAL_SERVER_ERROR,
+                RakeProtocolV2.ERROR_CODE_INTERNAL_SERVER_ERROR,
                 InternalServerErrorException.ERROR_CODE);
     }
 
@@ -50,31 +50,31 @@ public class RakeProtocolCodeSpec {
 
         assertEquals(
                 20000,
-                RakeProtocol.ERROR_CODE_OK);
+                RakeProtocolV2.ERROR_CODE_OK);
 
         assertEquals(
                 40001,
-                RakeProtocol.ERROR_CODE_INSUFFICIENT_JSON_FIELD);
+                RakeProtocolV2.ERROR_CODE_INSUFFICIENT_JSON_FIELD);
 
         assertEquals(
                 40002,
-                RakeProtocol.ERROR_CODE_INVALID_JSON_SYNTAX);
+                RakeProtocolV2.ERROR_CODE_INVALID_JSON_SYNTAX);
 
         assertEquals(
                 40101,
-                RakeProtocol.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN);
+                RakeProtocolV2.ERROR_CODE_NOT_REGISTERED_RAKE_TOKEN);
 
         assertEquals(
                 40301,
-                RakeProtocol.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE);
+                RakeProtocolV2.ERROR_CODE_WRONG_RAKE_TOKEN_USAGE);
 
         assertEquals(
                 40401,
-                RakeProtocol.ERROR_CODE_INVALID_END_POINT);
+                RakeProtocolV2.ERROR_CODE_INVALID_END_POINT);
 
         assertEquals(
                 50001,
-                RakeProtocol.ERROR_CODE_INTERNAL_SERVER_ERROR);
+                RakeProtocolV2.ERROR_CODE_INTERNAL_SERVER_ERROR);
 
     }
 }
