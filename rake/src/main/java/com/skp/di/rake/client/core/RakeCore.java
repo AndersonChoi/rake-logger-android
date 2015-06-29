@@ -129,7 +129,6 @@ public class RakeCore {
                 .buffer(RETRY_BUFFER_TIME, TimeUnit.MILLISECONDS, RETRY_BUFFER_COUNT)
                 .flatMap(buffers -> Observable.from(buffers))
                 .map(failed -> {
-                    /* iff failed */
                     trackable.onNext(failed);
 
                     // TODO metric
